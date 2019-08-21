@@ -1,0 +1,70 @@
+FROM ubuntu:16.04
+
+COPY sources.list.16.04 /etc/apt/sources.list
+COPY glibc_compat.h.16.04 /usr/include/glibc_compat.h
+
+ARG APT_NONINTERACTIVE='-y -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold'
+
+ARG PACKAGES="build-essential \
+    clang-4.0 \
+    crossbuild-essential-arm64 \
+    crossbuild-essential-armhf \
+    git-core \
+    libc6-dev \
+    libc++-dev \
+    libc++-dev:arm64 \
+    libc++-dev:armhf \
+    libusb-1.0-0 \
+    libusb-1.0-0:arm64 \
+    libusb-1.0-0:armhf \
+    libc++abi-dev \
+    libc++abi-dev:arm64 \
+    libc++abi-dev:armhf \
+    libpython3-dev \
+    libpython3-dev:arm64 \
+    libpython3-dev:armhf \
+    python3-numpy \
+    libunwind-dev:armhf \
+    imagemagick \
+    bc"
+
+RUN dpkg --add-architecture arm64
+RUN dpkg --add-architecture armhf
+RUN apt-get ${APT_NONINTERACTIVE} update
+RUN apt-get ${APT_NONINTERACTIVE} install -y ${PACKAGES}
+
+ARG PACKAGES_FOR_BAZEL="pkg-config \
+    zip \
+    g++ \
+    zlib1g-dev \
+    unzip \
+    python \
+    wget"
+
+# Install bazel 0.24.1.
+RUN apt-get ${APT_NONINTERACTIVE} install -y ${PACKAGES_FOR_BAZEL}
+RUN wget https://github.com/bazelbuild/bazel/releases/download/0.24.1/bazel-0.24.1-installer-linux-x86_64.sh
+RUN chmod +x bazel-0.24.1-installer-linux-x86_64.sh
+RUN ./bazel-0.24.1-installer-linux-x86_64.sh
+# Clean up.
+RUN rm bazel-0.24.1-installer-linux-x86_64.sh
+
+# Workaround for libc++/libc++abi bug on Raspbian
+#
+# Version of libc++/libc++abi:
+#   - Docker: 3.7.0
+#   - Raspbian(strech) : 3.5.2
+#
+# There is a bug in them which makes exceptions uncaught on Raspbian.
+#
+# This toolchain will download LLVM libc++/libc++abi (version 1:7.0) and
+# statically link it.
+RUN wget http://ftp.us.debian.org/debian/pool/main/l/llvm-toolchain-7/libc++-7-dev_7.0.1-8_armhf.deb
+RUN dpkg-deb -R libc++-7-dev_7.0.1-8_armhf.deb /tmp
+RUN wget http://ftp.us.debian.org/debian/pool/main/l/llvm-toolchain-7/libc++abi-7-dev_7.0.1-8_armhf.deb
+RUN dpkg-deb -R libc++abi-7-dev_7.0.1-8_armhf.deb /tmp
+# Copy .a for statically linkage.
+RUN cp -v /tmp/usr/lib/llvm-7/lib/libc++.a /usr/lib/arm-linux-gnueabihf
+RUN cp -v /tmp/usr/lib/llvm-7/lib/libc++abi.a /usr/lib/arm-linux-gnueabihf
+# Clean up.
+RUN rm libc++-7-dev_7.0.1-8_armhf.deb libc++abi-7-dev_7.0.1-8_armhf.deb
