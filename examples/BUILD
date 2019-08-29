@@ -22,7 +22,7 @@ cc_binary(
         "@lstm_object_detection//protos:detections_cc_proto",
         "@lstm_object_detection//protos:labelmap_cc_proto",
         "@lstm_object_detection//utils:file_utils",
-        "@libedgetpu//libedgetpu:lib",
+        # "@libedgetpu//libedgetpu:lib",
         # ":lib",
     ],
 )
