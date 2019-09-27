@@ -7,42 +7,65 @@ video clip.
 The targeted devices are CPU and Edge TPU.
 
 ## Maintainers
-* Yongzhe Wang (yongzhe@google.com)
-* Henry Quoc Tran (henryquoctran@google.com)
+* yongzhe@google.com
+* henryquoctran@google.com
 
-# Building
-Launch a docker shell.
-```
-make -f ondevice-examples.makefile  docker-example-shell
-```
+---
 
-Enter working directory.
-```
-cd /edgetpu-ml-cpp
-```
+## Dependencies
+Docker (>= 18.09.3)
 
-Build the binaries. For development, stay in the docker shell and re-run the
-following command to create a new build.
-```
-make -f ondevice-examples.makefile ondevice-examples
-```
+Docker is used to simplify the development process and avoid any
+environment and setup issues.
 
-The resulting binaries will be copied to `cpp_example_out/ondevice_demo_*`.
-
-The ondevice-examples command will build binaries for amd64 (desktop), arm64,
-and arm32.
-
-For faster development, use a platform specific makefile rule:
-```
-make -f ondevice-examples.makefile ondevice-examples-arm64
-```
-
-# Visualization
-
-Running `./ondevice_demo` will create .txt files with the classes, score, and bounding boxes. To visualize the output, you may run the following command while still in the docker shell:
+## Build Examples
+To build the example in one-shot:
 
 ```
-bazel run //tools:visualizer -- --image_path=`pwd`/output/00001.bmp --result_path=`pwd`/output/00001.bmp.txt --output_path=`pwd`/00001_visualized.bmp
+make docker-example-compile
 ```
 
-Note that bazel does not execute from the working directory, so the paths are prefixed with \`pwd\`. This is not necessary if an absolute path is given.
+## Developing
+The above command will instantly remove all build artifacts and caches
+upon completion, and can be slow for active development.
+
+For development, launch a docker shell instead:
+
+```
+make docker-example-shell
+cd automl-video-ondevice
+```
+
+Then to build:
+
+```
+make ondevice-examples-${CPU}
+```
+
+Where CPU can be:
+
+* k8
+* armv7a
+* aarch64 (Common for Coral EdgeTPU devices.)
+
+Optionally, the binary can be deployed to vanilla Coral device with the
+following command:
+
+```
+scp bin/ondevice_demo_aarch64 mendel@192.168.100.2:~/ondevice_demo_aarch64
+```
+
+## Visualization
+
+Running `./ondevice_demo_*` will create .txt files with the classes, score, and
+bounding boxes. To visualize the output, you may run the following command
+while still in the docker shell:
+
+```
+bazel run //tools:visualizer -- --image_path=`pwd`/output/00001.bmp \
+  --result_path=`pwd`/output/00001.bmp.txt \
+  --output_path=`pwd`/00001_visualized.bmp
+```
+
+Note that bazel does not execute from the working directory, so the paths are
+prefixed with \`pwd\`. This is not necessary if an absolute path is given.

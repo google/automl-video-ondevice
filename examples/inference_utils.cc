@@ -31,6 +31,7 @@
 namespace automlvideo {
 namespace ondevice {
 namespace {
+
 using tflite::ops::builtin::BuiltinOpResolver;
 
 std::vector<uint8_t> _DecodeBmp(const uint8_t* input, int row_size, int width,

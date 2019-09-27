@@ -1,8 +1,9 @@
-[submodule "tensorflow"]
-	path = tensorflow
-	url = https://github.com/tensorflow/tensorflow.git
-	branch = master
-[submodule "models"]
-	path = models
-	url = https://github.com/tensorflow/models.git
-	branch = master
+[submodule "third_party/edgetpu"]
+	path = third_party/edgetpu
+	url = https://github.com/google-coral/edgetpu
+[submodule "third_party/tensorflow"]
+	path = third_party/tensorflow
+	url = https://github.com/tensorflow/tensorflow
+[submodule "third_party/models"]
+	path = third_party/models
+	url = http://github.com/tensorflow/models

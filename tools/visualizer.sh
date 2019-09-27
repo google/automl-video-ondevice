@@ -14,10 +14,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Usage: bazel run //visualizer -- --image_path=/tmp/car/00001.bmp \
+# Usage: bazel run //tools:visualizer -- --image_path=/tmp/car/00001.bmp \
 #          --result_path=/tmp/car/test.txt --output_path=`pwd`/test_output.bmp
 
-. "$0.runfiles/shFlags/shflags"
+. "$0.runfiles/shFlags/shflags" || exit -1
 
 DEFINE_string image_path 'test.jpg' 'The image file. '
 DEFINE_string result_path 'test.txt' 'The tflite model detection result in format per row -- label: score [y1 x1 y2 x2].'

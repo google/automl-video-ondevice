@@ -4,5 +4,5 @@ package(
 
 sh_library(
     name = "lib",
-    srcs = ["shflags"]
+    srcs = ["shflags"],
 )

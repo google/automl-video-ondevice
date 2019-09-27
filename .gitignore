@@ -8,7 +8,7 @@ bazel-out
 bazel-testlogs
 
 # Docker build artifacts.
-cpp_example_out
+bin
 
 # IDE generated files.
 .vscode
