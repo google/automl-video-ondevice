@@ -7,8 +7,12 @@ bazel-genfiles
 bazel-out
 bazel-testlogs
 
-# Docker build artifacts.
+# Build artifacts.
 bin
+
+# Inference outputs.
+data/traffic_frames/*.bmp.txt
+data/traffic_frames/*_visualized.bmp
 
 # IDE generated files.
 .vscode

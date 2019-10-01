@@ -127,7 +127,7 @@ local_repository(
     path = "third_party/tensorflow",
 )
 load("@org_tensorflow//tensorflow:workspace.bzl", "tf_workspace")
-tf_workspace()
+tf_workspace(tf_repo_name = "org_tensorflow")
 
 # EdgeTPU
 local_repository(
