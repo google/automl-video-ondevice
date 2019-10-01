@@ -7,8 +7,8 @@ video clip.
 The targeted devices are CPU and Edge TPU.
 
 ## Maintainers
-* yongzhe@google.com
-* henryquoctran@google.com
+* Yongzhe Wang (yongzhe@google.com)
+* Henry Quoc Tran (henryquoctran@google.com)
 
 ---
 
