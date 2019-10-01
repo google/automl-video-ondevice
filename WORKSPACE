@@ -1,5 +1,6 @@
 workspace(name = "automl_video_ondevice")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
 http_archive(
     name = "bazel_skylib",
@@ -12,13 +13,14 @@ load("@bazel_skylib//lib:versions.bzl", "versions")
 
 http_archive(
     name = "io_bazel_rules_closure",
-    sha256 = "43c9b882fa921923bcba764453f4058d102bece35a37c9f6383c713004aacff1",
-    strip_prefix = "rules_closure-9889e2348259a5aad7e805547c1a0cf311cfcd91",
+    sha256 = "5b00383d08dd71f28503736db0500b6fb4dda47489ff5fc6bed42557c07c6ba9",
+    strip_prefix = "rules_closure-308b05b2419edb5c8ee0471b67a40403df940149",
     urls = [
-        "https://mirror.bazel.build/github.com/bazelbuild/rules_closure/archive/9889e2348259a5aad7e805547c1a0cf311cfcd91.tar.gz",
-        "https://github.com/bazelbuild/rules_closure/archive/9889e2348259a5aad7e805547c1a0cf311cfcd91.tar.gz",  # 2018-12-21
+        "http://mirror.tensorflow.org/github.com/bazelbuild/rules_closure/archive/308b05b2419edb5c8ee0471b67a40403df940149.tar.gz",
+        "https://github.com/bazelbuild/rules_closure/archive/308b05b2419edb5c8ee0471b67a40403df940149.tar.gz",  # 2019-06-13
     ],
 )
+
 load("@io_bazel_rules_closure//closure:defs.bzl", "closure_repositories")
 closure_repositories()
 
@@ -116,27 +118,27 @@ http_archive(
 # LSTM TFlite Inference
 local_repository(
     name = "lstm_object_detection",
-    path = "models/research/lstm_object_detection/tflite",
+    path = "third_party/models/research/lstm_object_detection/tflite",
 )
 
 # Tensorflow
 local_repository(
     name = "org_tensorflow",
-    path = "tensorflow",
+    path = "third_party/tensorflow",
 )
 load("@org_tensorflow//tensorflow:workspace.bzl", "tf_workspace")
-tf_workspace()
+tf_workspace(tf_repo_name = "org_tensorflow")
 
 # EdgeTPU
-http_archive(
+local_repository(
     name = "libedgetpu",
-    urls = ["https://coral.googlesource.com/edgetpu-native/+archive/refs/heads/release-chef.tar.gz"],
+    path = "third_party/edgetpu",
 )
 
 # shflags
 http_archive(
     name = "shFlags",
-    build_file = "BUILD.shFlags",
+    build_file = "//third_party:shFlags.BUILD",
     sha256 = "2f5cae06465d5eb98c5cf820e948b14ba994e493b17db579b2a57ef0ea2101a7",
     strip_prefix = "shflags-874a56a8ef6039ca8d77f8a883a239b62b4635ba",
     urls = ["https://github.com/kward/shflags/archive/874a56a8ef6039ca8d77f8a883a239b62b4635ba.zip"],
@@ -147,3 +149,10 @@ new_local_repository(
     path = "/",
     build_file = "BUILD.python"
 )
+
+local_repository(
+    name = "tools",
+    path = "third_party/edgetpu/tools",
+)
+load("@tools//:configure.bzl", "cc_crosstool")
+cc_crosstool(name = "crosstool")

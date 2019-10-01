@@ -1,14 +1,18 @@
 # Bazel generated files.
 bazel-edgetpu-native
 bazel-edgetpu-ml-cpp
-bazel-automl_video_ondevice
+bazel-automl-video-ondevice
 bazel-bin
 bazel-genfiles
 bazel-out
 bazel-testlogs
 
-# Docker build artifacts.
-cpp_example_out
+# Build artifacts.
+bin
+
+# Inference outputs.
+data/traffic_frames/*.bmp.txt
+data/traffic_frames/*_visualized.bmp
 
 # IDE generated files.
 .vscode

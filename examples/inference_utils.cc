@@ -31,6 +31,7 @@
 namespace automlvideo {
 namespace ondevice {
 namespace {
+
 using tflite::ops::builtin::BuiltinOpResolver;
 
 std::vector<uint8_t> _DecodeBmp(const uint8_t* input, int row_size, int width,
@@ -196,13 +197,13 @@ std::vector<std::string> FindImages(const std::string& directory) {
   if (::absl::EndsWith(directory, "/")) {
     directory_with_ending_slash = directory;
   } else {
-    directory_with_ending_slash + "/";
+    directory_with_ending_slash = directory + "/";
   }
 
   std::vector<std::string> paths;
   DIR* d;
   struct dirent* dir;
-  d = opendir(directory.c_str());
+  d = opendir(directory_with_ending_slash.c_str());
   if (d) {
     while ((dir = readdir(d)) != NULL) {
       if (::absl::EndsWithIgnoreCase(dir->d_name, ".bmp")) {

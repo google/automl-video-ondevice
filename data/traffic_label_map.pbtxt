@@ -1,0 +1,12 @@
+item {
+  name: "sedan"
+  id: 1
+}
+item {
+  name: "pickup_suv_van"
+  id: 2
+}
+item {
+  name: "large_veh_bus"
+  id: 3
+}

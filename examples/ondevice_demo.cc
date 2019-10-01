@@ -32,16 +32,16 @@
 #include "protos/labelmap.pb.h"
 #include "utils/file_utils.h"
 
-DEFINE_string(images_file_path, "/tmp/car/",
+DEFINE_string(images_file_path, "/tmp/car",
               "directory of images to run inference on");
-DEFINE_string(model_file_path, "/tmp/yongzhe_no_anchor_model.tflite",
-              "model file path");
-DEFINE_string(label_map_file_path, "/tmp/labelmap.pbtxt",
+DEFINE_string(model_file_path, "/tmp/model.tflite", "model file path");
+DEFINE_string(label_map_file_path, "/tmp/label_map.pbtxt",
               "label map file path");
 
 namespace automlvideo {
 namespace ondevice {
 
+namespace {
 struct Result {
   int left;
   int right;
@@ -49,22 +49,23 @@ struct Result {
   int bottom;
   std::string label;
 };
+}  // namespace
 
 void DetectMain() {
-  // List the files to process.
-  LOG(INFO) << "image file pattern" << FLAGS_images_file_path;
+  // Retrieves all images in a given directory as a list.
   std::vector<std::string> image_files = FindImages(FLAGS_images_file_path);
-
   std::sort(image_files.begin(), image_files.end());
-  std::map<std::string, std::vector<std::vector<Result>>> results;
 
+  // Loads tflite model. Supports Edge and Non-Edge models.
   auto options = ::lstm_object_detection::tflite::MobileLSTDTfLiteClient::
       CreateDefaultOptions();
   options.set_quantize(true);
   options.set_score_threshold(-5.0);
   CHECK(!FLAGS_model_file_path.empty());
   options.mutable_external_files()->set_model_file_name(FLAGS_model_file_path);
-  LOG(INFO) << "Loaded Client";
+  LOG(INFO) << "Loaded model.";
+
+  // Loads label map.
   CHECK(!FLAGS_label_map_file_path.empty());
   ::lstm_object_detection::tflite::protos::StringIntLabelMapProto labelmap;
   const std::string proto_bytes =
@@ -74,36 +75,37 @@ void DetectMain() {
       ::google::protobuf::TextFormat::ParseFromString(proto_bytes, &labelmap));
   auto labelmap_bytes = labelmap.SerializeAsString();
   options.mutable_external_files()->set_label_map_file_content(labelmap_bytes);
-  LOG(INFO) << "Label map";
+  LOG(INFO) << "Loaded label map.";
 
   auto detector = ::lstm_object_detection::tflite::MobileLSTDTfLiteClient::
       MobileLSTDTfLiteClient::Create(options);
 
-  ::lstm_object_detection::tflite::protos::DetectionResults detections;
-  LOG(INFO) << "image file size: " << image_files.size();
+  // Loops through all images in directory.
   for (const std::string &image_file : image_files) {
     LOG(INFO) << "Input image: " << image_file;
 
-    // Read image
+    // Reads image into a 256x256x3 byte array.
     std::vector<uint8_t> input = GetInputFromImage(
         image_file, {detector->GetInputWidth(), detector->GetInputHeight(), 3});
+
+    // Runs inference.
+    ::lstm_object_detection::tflite::protos::DetectionResults detections;
     CHECK(detector->Detect(input.data(), &detections));
-    std::vector<Result> image_results;
+
+    // Opens up detections result file for writing.
     std::ofstream detections_file;
-    detections_file.open(image_file + ".txt", std::ios::trunc);
+    detections_file.open(image_file + ".txt",
+                         std::ofstream::out | std::ofstream::trunc);
     for (int i = 0; i < detections.detection_size(); i++) {
       auto &det = detections.detection(i);
-      LOG(INFO) << ::absl::StrFormat(
-          "Detection: box [% .2f % .2f % .2f % .2f] ", det.box().ymin(0),
-          det.box().xmin(0), det.box().ymax(0), det.box().xmax(0));
       for (int j = 0; j < det.class_index_size(); ++j) {
         std::string class_name = detector->GetLabelName(det.class_index(j));
-        LOG(INFO) << ::absl::StrFormat("  %i: object class [%s], score [%0.2f]",
-                                       j + 1, class_name, det.score(j));
-        detections_file << ::absl::StrFormat(
+        std::string detections_entry = ::absl::StrFormat(
             "%s: %f [%f, %f, %f, %f]\n", class_name, det.score(j),
             det.box().ymin(0), det.box().xmin(0), det.box().ymax(0),
             det.box().xmax(0));
+        LOG(INFO) << detections_entry;
+        detections_file << detections_entry;
       }
     }
     detections_file.close();
@@ -117,12 +119,4 @@ int main(int argc, char *argv[]) {
   gflags::ParseCommandLineFlags(&argc, &argv, true);
   ::automlvideo::ondevice::DetectMain();
   return 0;
-}
-
-// Needed when compiling with EdgeTPU chef release. Can be removed when
-// upgraded to diploria release.
-extern "C" int __cxa_thread_atexit(void (*func)(), void *obj,
-                                   void *dso_symbol) {
-  int __cxa_thread_atexit_impl(void (*)(), void *, void *);
-  return __cxa_thread_atexit_impl(func, obj, dso_symbol);
 }
