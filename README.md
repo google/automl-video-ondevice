@@ -6,10 +6,6 @@ video clip.
 
 The targeted devices are CPU and Edge TPU.
 
-## Maintainers
-* Yongzhe Wang (yongzhe@google.com)
-* Henry Quoc Tran (henryquoctran@google.com)
-
 ---
 
 ## Dependencies
