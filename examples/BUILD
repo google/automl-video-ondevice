@@ -9,13 +9,9 @@ cc_binary(
     srcs = ["ondevice_demo.cc"],
     deps = [
         ":inference_utils",
+        "//third_party/automl_video_ondevice/src:ondevice",
         "@com_google_absl//absl/strings:str_format",
         "@com_google_glog//:glog",
-        "@lstm_object_detection//:mobile_lstd_tflite_client",
-        "@lstm_object_detection//protos:box_encodings_cc_proto",
-        "@lstm_object_detection//protos:detections_cc_proto",
-        "@lstm_object_detection//protos:labelmap_cc_proto",
-        "@lstm_object_detection//utils:file_utils",
     ],
 )
 

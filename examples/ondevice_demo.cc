@@ -26,11 +26,7 @@
 #include "absl/strings/str_format.h"
 #include "examples/inference_utils.h"
 #include "gflags/gflags.h"
-#include "mobile_lstd_tflite_client.h  // @lstm_object_detection"
-#include "protos/box_encodings.pb.h  // @lstm_object_detection"
-#include "protos/detections.pb.h  // @lstm_object_detection"
-#include "protos/labelmap.pb.h  // @lstm_object_detection"
-#include "utils/file_utils.h  // @lstm_object_detection"
+#include "third_party/automl_video_ondevice/src/ondevice.h"
 
 DEFINE_string(images_file_path, "/tmp/car",
               "directory of images to run inference on");
@@ -52,62 +48,47 @@ struct Result {
 }  // namespace
 
 void DetectMain() {
+  const auto inference = ObjectTrackingInference::TFLiteModel(
+      FLAGS_model_file_path, FLAGS_label_map_file_path,
+      {/*score_threshold=*/0.2f});
+
   // Retrieves all images in a given directory as a list.
   std::vector<std::string> image_files = FindImages(FLAGS_images_file_path);
   std::sort(image_files.begin(), image_files.end());
 
-  // Loads tflite model. Supports Edge and Non-Edge models.
-  auto options = ::lstm_object_detection::tflite::MobileLSTDTfLiteClient::
-      CreateDefaultOptions();
-  options.set_quantize(true);
-  options.set_score_threshold(-5.0);
-  CHECK(!FLAGS_model_file_path.empty());
-  options.mutable_external_files()->set_model_file_name(FLAGS_model_file_path);
-  LOG(INFO) << "Loaded model.";
-
-  // Loads label map.
-  CHECK(!FLAGS_label_map_file_path.empty());
-  ::lstm_object_detection::tflite::protos::StringIntLabelMapProto labelmap;
-  const std::string proto_bytes =
-      ::lstm_object_detection::tflite::ReadFileToString(
-          FLAGS_label_map_file_path);
-  CHECK(
-      ::google::protobuf::TextFormat::ParseFromString(proto_bytes, &labelmap));
-  auto labelmap_bytes = labelmap.SerializeAsString();
-  options.mutable_external_files()->set_label_map_file_content(labelmap_bytes);
-  LOG(INFO) << "Loaded label map.";
-
-  auto detector = ::lstm_object_detection::tflite::MobileLSTDTfLiteClient::
-      MobileLSTDTfLiteClient::Create(options);
+  // Gets the input size compatible with the inference graph.
+  // This is used to resize the images to something the inferencer can use.
+  Size input_size = inference->getInputSize();
 
   // Loops through all images in directory.
   for (const std::string &image_file : image_files) {
     LOG(INFO) << "Input image: " << image_file;
 
     // Reads image into a 256x256x3 byte array.
-    std::vector<uint8_t> input = GetInputFromImage(
-        image_file, {detector->GetInputWidth(), detector->GetInputHeight(), 3});
-
-    // Runs inference.
-    ::lstm_object_detection::tflite::protos::DetectionResults detections;
-    CHECK(detector->Detect(input.data(), &detections));
+    std::vector<uint8_t> input =
+        GetInputFromImage(image_file, {input_size.width, input_size.height, 3});
 
     // Opens up detections result file for writing.
     std::ofstream detections_file;
     detections_file.open(image_file + ".txt",
                          std::ofstream::out | std::ofstream::trunc);
-    for (int i = 0; i < detections.detection_size(); i++) {
-      auto &det = detections.detection(i);
-      for (int j = 0; j < det.class_index_size(); ++j) {
-        std::string class_name = detector->GetLabelName(det.class_index(j));
-        std::string detections_entry = ::absl::StrFormat(
-            "%s: %f [%f, %f, %f, %f]\n", class_name, det.score(j),
-            det.box().ymin(0), det.box().xmin(0), det.box().ymax(0),
-            det.box().xmax(0));
-        LOG(INFO) << detections_entry;
-        detections_file << detections_entry;
+
+    // Runs inference.
+    std::vector<const ObjectTrackingAnnotation> annotations;
+    if (inference->run(input, &annotations)) {
+      for (auto annotation : annotations) {
+        std::string annotations_entry = ::absl::StrFormat(
+            "%s: %f [%f, %f, %f, %f]\n", annotation.class_name,
+            annotation.confidence_score, annotation.bbox.top,
+            annotation.bbox.left, annotation.bbox.bottom,
+            annotation.bbox.right);
+        LOG(INFO) << annotations_entry;
+        detections_file << annotations_entry;
       }
+    } else {
+      LOG(WARNING) << "Could not run inference on input image!";
     }
+
     detections_file.close();
   }
 }
