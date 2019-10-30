@@ -26,11 +26,11 @@
 #include "absl/strings/str_format.h"
 #include "examples/inference_utils.h"
 #include "gflags/gflags.h"
-#include "mobile_lstd_tflite_client.h"
-#include "protos/box_encodings.pb.h"
-#include "protos/detections.pb.h"
-#include "protos/labelmap.pb.h"
-#include "utils/file_utils.h"
+#include "mobile_lstd_tflite_client.h  // @lstm_object_detection"
+#include "protos/box_encodings.pb.h  // @lstm_object_detection"
+#include "protos/detections.pb.h  // @lstm_object_detection"
+#include "protos/labelmap.pb.h  // @lstm_object_detection"
+#include "utils/file_utils.h  // @lstm_object_detection"
 
 DEFINE_string(images_file_path, "/tmp/car",
               "directory of images to run inference on");
