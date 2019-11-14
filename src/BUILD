@@ -6,8 +6,18 @@ licenses(["notice"])
 
 cc_library(
     name = "ondevice",
-    srcs = ["ondevice.cc"],
+    srcs = ["libondevice.so"],
     hdrs = ["ondevice.h"],
+)
+
+cc_binary(
+    name = "libondevice.so",
+    srcs = [
+        "ondevice.cc",
+        "ondevice.h",
+    ],
+    linkshared = True,
+    linkstatic = 1,
     deps = [
         "@lstm_object_detection//:mobile_lstd_tflite_client",
         "@lstm_object_detection//protos:box_encodings_cc_proto",

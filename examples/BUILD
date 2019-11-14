@@ -9,7 +9,7 @@ cc_binary(
     srcs = ["ondevice_demo.cc"],
     deps = [
         ":inference_utils",
-        "//third_party/automl_video_ondevice/src:ondevice",
+        "//src:ondevice",
         "@com_google_absl//absl/strings:str_format",
         "@com_google_glog//:glog",
     ],

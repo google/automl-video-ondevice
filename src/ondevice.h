@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 namespace automlvideo {
 namespace ondevice {
@@ -76,9 +77,9 @@ class ObjectTrackingInference {
   // millisecond integer. Frame must be in RGB888 format.
   //
   // Returns true if inference is successful.
-  virtual bool run(
-      const int64_t timestamp, const std::vector<unsigned char> &frame,
-      std::vector<const ObjectTrackingAnnotation> *annotations) = 0;
+  virtual bool run(const int64_t timestamp,
+                   const std::vector<unsigned char> &frame,
+                   std::vector<ObjectTrackingAnnotation> *annotations) = 0;
 
   // If available, retrieves the input size accepted by the model.
   virtual Size getInputSize() = 0;

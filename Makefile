@@ -19,7 +19,8 @@ BAZEL_FLAGS := --crosstool_top=@crosstool//:toolchains \
 				--define enable_edgetpu=true \
 				--linkopt=-l:libedgetpu.so.1.0 \
 				--linkopt=-Wl,--strip-all \
-				--copt=-ffp-contract=off
+				--copt=-ffp-contract=off \
+				--disk_cache=bazel-cache
 
 .PHONY: all \
 				docker-example-image \
@@ -39,7 +40,30 @@ docker-example-image:
 docker-example-shell: docker-example-image
 	docker run --rm -it -v $(ROOT_DIR):/automl-video-ondevice $(TAG_EXAMPLE)
 docker-example-compile: docker-example-image
-	docker run --rm -t -v $(ROOT_DIR):/automl-video-ondevice $(TAG_EXAMPLE) make UID=$(UID) GID=$(GID) -C /automl-video-ondevice ondevice-examples
+	docker run --rm -t -v $(ROOT_DIR):/automl-video-ondevice $(TAG_EXAMPLE) make UID=$(UID) GID=$(GID) -C /automl-video-ondevice all
+all: ondevice ondevice-examples
+
+ondevice: ondevice-k8 ondevice-armv7a ondevice-aarch64
+
+ondevice-k8:
+	bazel build $(BAZEL_FLAGS) --cpu=k8 \
+		--linkopt=-L$(CUR_DIR)/third_party/edgetpu/libedgetpu/direct/k8 \
+		//src:libondevice.so
+	mkdir -p $(OUT_DIR)/k8
+	$(COPY) bazel-out/k8-opt/bin/src/libondevice.so $(OUT_DIR)/k8/libondevice.so
+ondevice-armv7a:
+	bazel build $(BAZEL_FLAGS) --cpu=armv7a \
+		--linkopt=-L$(CUR_DIR)/third_party/edgetpu/libedgetpu/direct/armv7a \
+		//src:libondevice.so
+	mkdir -p $(OUT_DIR)/armv7a
+	$(COPY) bazel-out/armv7a-opt/bin/src/libondevice.so $(OUT_DIR)/armv7a/libondevice.so
+ondevice-aarch64:
+	bazel build $(BAZEL_FLAGS) --cpu=aarch64 \
+		--linkopt=-L$(CUR_DIR)/third_party/edgetpu/libedgetpu/direct/aarch64 \
+		//src:libondevice.so
+	mkdir -p $(OUT_DIR)/aarch64
+	$(COPY) bazel-out/aarch64-opt/bin/src/libondevice.so $(OUT_DIR)/aarch64/libondevice.so
+
 
 ondevice-examples: ondevice-examples-k8 ondevice-examples-armv7a ondevice-examples-aarch64
 
@@ -47,17 +71,20 @@ ondevice-examples-k8:
 	bazel build $(BAZEL_FLAGS) --cpu=k8 \
 		--linkopt=-L$(CUR_DIR)/third_party/edgetpu/libedgetpu/direct/k8 \
 		//examples:ondevice_demo
-	$(COPY) bazel-out/k8-opt/bin/examples/ondevice_demo $(OUT_DIR)/ondevice_demo_k8
+	mkdir -p $(OUT_DIR)/k8
+	$(COPY) bazel-out/k8-opt/bin/examples/ondevice_demo $(OUT_DIR)/k8/ondevice_demo
 ondevice-examples-armv7a:
 	bazel build $(BAZEL_FLAGS) --cpu=armv7a \
 		--linkopt=-L$(CUR_DIR)/third_party/edgetpu/libedgetpu/direct/armv7a \
 		//examples:ondevice_demo
-	$(COPY) bazel-out/armv7a-opt/bin/examples/ondevice_demo $(OUT_DIR)/ondevice_demo_armv7a
+	mkdir -p $(OUT_DIR)/armv7a
+	$(COPY) bazel-out/armv7a-opt/bin/examples/ondevice_demo $(OUT_DIR)/armv7a/ondevice_demo
 ondevice-examples-aarch64:
 	bazel build $(BAZEL_FLAGS) --cpu=aarch64 \
 		--linkopt=-L$(CUR_DIR)/third_party/edgetpu/libedgetpu/direct/aarch64 \
 		//examples:ondevice_demo
-	$(COPY) bazel-out/aarch64-opt/bin/examples/ondevice_demo $(OUT_DIR)/ondevice_demo_aarch64
+	mkdir -p $(OUT_DIR)/aarch64
+	$(COPY) bazel-out/aarch64-opt/bin/examples/ondevice_demo $(OUT_DIR)/aarch64/ondevice_demo
 
 clean:
 	rm -rf $(OUT_DIR)
