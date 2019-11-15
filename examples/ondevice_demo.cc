@@ -26,7 +26,7 @@
 #include "absl/strings/str_format.h"
 #include "examples/inference_utils.h"
 #include "gflags/gflags.h"
-#include "third_party/automl_video_ondevice/src/ondevice.h"
+#include "src/ondevice.h"
 
 DEFINE_string(images_file_path, "/tmp/car",
               "directory of images to run inference on");

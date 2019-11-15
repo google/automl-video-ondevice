@@ -1,13 +1,13 @@
-#include "third_party/automl_video_ondevice/src/ondevice.h"
+#include "src/ondevice.h"
 
 #include <memory>
 
-#include "mobile_lstd_tflite_client.h  // @lstm_object_detection"
-#include "protos/box_encodings.pb.h  // @lstm_object_detection"
-#include "protos/detections.pb.h  // @lstm_object_detection"
-#include "protos/labelmap.pb.h  // @lstm_object_detection"
-#include "protos/mobile_ssd_client_options.pb.h  // @lstm_object_detection"
-#include "utils/file_utils.h  // @lstm_object_detection"
+#include "mobile_lstd_tflite_client.h"            // @lstm_object_detection"
+#include "protos/box_encodings.pb.h"              // @lstm_object_detection"
+#include "protos/detections.pb.h"                 // @lstm_object_detection"
+#include "protos/labelmap.pb.h"                   // @lstm_object_detection"
+#include "protos/mobile_ssd_client_options.pb.h"  // @lstm_object_detection"
+#include "utils/file_utils.h"                     // @lstm_object_detection"
 
 namespace automlvideo {
 namespace ondevice {
