@@ -60,7 +60,7 @@ Where CPU can be:
 
 
 ```
-./bin/ondevice_demo_k8 --alsologtostderr \
+./bin/k8/ondevice_demo --alsologtostderr \
   --model_file_path=./data/traffic_model.tflite \
   --label_map_file_path=./data/traffic_label_map.pbtxt \
   --images_file_path=./data/traffic_frames
@@ -71,7 +71,7 @@ Where CPU can be:
 The binary and test data must be deployed to the device:
 
 ```
-scp bin/ondevice_demo_aarch64 mendel@192.168.100.2:~/ondevice_demo_aarch64
+scp bin/aarch64/ondevice_demo mendel@192.168.100.2:~/ondevice_demo_aarch64
 scp -r data mendel@192.168.100.2:~/data
 ```
 

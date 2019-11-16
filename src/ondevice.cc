@@ -1,5 +1,8 @@
 #include "src/ondevice.h"
 
+#include <glog/logging.h>
+#include <google/protobuf/text_format.h>
+
 #include <memory>
 
 #include "mobile_lstd_tflite_client.h"            // @lstm_object_detection"
@@ -38,7 +41,7 @@ class TFLiteModelObjectTrackingInference : public ObjectTrackingInference {
 
   virtual bool run(const int64_t timestamp,
                    const std::vector<unsigned char> &frame,
-                   std::vector<const ObjectTrackingAnnotation> *detections) {
+                   std::vector<ObjectTrackingAnnotation> *detections) {
     DetectionResults internal_detections;
     CHECK(detector_->Detect(frame.data(), &internal_detections));
     for (int i = 0; i < internal_detections.detection_size(); i++) {
@@ -74,8 +77,8 @@ class TFLiteModelObjectTrackingInference : public ObjectTrackingInference {
     StringIntLabelMapProto labelmap;
     const std::string proto_bytes =
         ::lstm_object_detection::tflite::ReadFileToString(label_map_file);
-    // Parses text protobuffer.
-    if (!TextFormat::ParseFromString(proto_bytes, &labelmap)) {
+    if (!::google::protobuf::TextFormat::ParseFromString(proto_bytes,
+                                                         &labelmap)) {
       return false;
     }
     // Serializes to binary std::string.

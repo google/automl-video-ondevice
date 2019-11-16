@@ -18,7 +18,6 @@
 // trained LSTD MobileNet V2 model in TfLite format.
 
 #include <glog/logging.h>
-#include <google/protobuf/text_format.h>
 
 #include <fstream>
 #include <iostream>
@@ -48,9 +47,10 @@ struct Result {
 }  // namespace
 
 void DetectMain() {
+  ObjectTrackingConfig config;
+  config.score_threshold = 0.2f;
   const auto inference = ObjectTrackingInference::TFLiteModel(
-      FLAGS_model_file_path, FLAGS_label_map_file_path,
-      {/*score_threshold=*/0.2f});
+      FLAGS_model_file_path, FLAGS_label_map_file_path, config);
 
   // Retrieves all images in a given directory as a list.
   std::vector<std::string> image_files = FindImages(FLAGS_images_file_path);
@@ -74,8 +74,8 @@ void DetectMain() {
                          std::ofstream::out | std::ofstream::trunc);
 
     // Runs inference.
-    std::vector<const ObjectTrackingAnnotation> annotations;
-    int64 timestamp = 0;
+    std::vector<ObjectTrackingAnnotation> annotations;
+    int64_t timestamp = 0;
     if (inference->run(timestamp++, input, &annotations)) {
       for (auto annotation : annotations) {
         std::string annotations_entry = ::absl::StrFormat(
