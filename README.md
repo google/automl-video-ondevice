@@ -71,6 +71,7 @@ Where CPU can be:
 The binary and test data must be deployed to the device:
 
 ```
+scp bin/aarch64/libondevice.so mendel@192.168.100.2:~/libondevice.so
 scp bin/aarch64/ondevice_demo mendel@192.168.100.2:~/ondevice_demo_aarch64
 scp -r data mendel@192.168.100.2:~/data
 ```

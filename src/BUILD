@@ -8,6 +8,7 @@ cc_library(
     name = "ondevice",
     srcs = ["libondevice.so"],
     hdrs = ["ondevice.h"],
+    linkopts = ["-Wl,-R."],
 )
 
 cc_binary(

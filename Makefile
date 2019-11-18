@@ -72,18 +72,21 @@ ondevice-examples-k8:
 		--linkopt=-L$(CUR_DIR)/third_party/edgetpu/libedgetpu/direct/k8 \
 		//examples:ondevice_demo
 	mkdir -p $(OUT_DIR)/k8
+	$(COPY) bazel-out/k8-opt/bin/src/libondevice.so $(OUT_DIR)/k8/libondevice.so
 	$(COPY) bazel-out/k8-opt/bin/examples/ondevice_demo $(OUT_DIR)/k8/ondevice_demo
 ondevice-examples-armv7a:
 	bazel build $(BAZEL_FLAGS) --cpu=armv7a \
 		--linkopt=-L$(CUR_DIR)/third_party/edgetpu/libedgetpu/direct/armv7a \
 		//examples:ondevice_demo
 	mkdir -p $(OUT_DIR)/armv7a
+	$(COPY) bazel-out/armv7a-opt/bin/src/libondevice.so $(OUT_DIR)/armv7a/libondevice.so
 	$(COPY) bazel-out/armv7a-opt/bin/examples/ondevice_demo $(OUT_DIR)/armv7a/ondevice_demo
 ondevice-examples-aarch64:
 	bazel build $(BAZEL_FLAGS) --cpu=aarch64 \
 		--linkopt=-L$(CUR_DIR)/third_party/edgetpu/libedgetpu/direct/aarch64 \
 		//examples:ondevice_demo
 	mkdir -p $(OUT_DIR)/aarch64
+	$(COPY) bazel-out/aarch64-opt/bin/src/libondevice.so $(OUT_DIR)/aarch64/libondevice.so
 	$(COPY) bazel-out/aarch64-opt/bin/examples/ondevice_demo $(OUT_DIR)/aarch64/ondevice_demo
 
 clean:
