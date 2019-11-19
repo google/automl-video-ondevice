@@ -5,7 +5,8 @@
 CUR_DIR := $(realpath $(dir $(lastword $(MAKEFILE_LIST))))
 ROOT_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 OUT_DIR := bin
-TAG_EXAMPLE := automl-video-ondevice/examples
+TAG_EDGETPU := automl-video-ondevice/edgetpu
+TAG_ONDEVICE := automl-video-ondevice/ondevice
 UID ?= $(shell id -u)
 GID ?= $(shell id -g)
 COPY := install -d -m 755 -o $(UID) -g $(GID) $(OUT_DIR) && install -C -m 755 -o $(UID) -g $(GID)
@@ -20,7 +21,8 @@ BAZEL_FLAGS := --crosstool_top=@crosstool//:toolchains \
 				--linkopt=-l:libedgetpu.so.1.0 \
 				--linkopt=-Wl,--strip-all \
 				--copt=-ffp-contract=off \
-				--disk_cache=bazel-cache
+				--disk_cache=bazel-cache \
+				--define PY3_VER=37
 
 .PHONY: all \
 				docker-example-image \
@@ -36,12 +38,13 @@ all:
 	@echo "make clean                  - Remove generated files"
 
 docker-example-image:
-	docker build -t $(TAG_EXAMPLE) --build-arg VERSION="18.04" -f third_party/edgetpu/docker/Dockerfile.ubuntu third_party/edgetpu/docker
+	docker build -t $(TAG_EDGETPU) --build-arg VERSION="19.04" -f third_party/edgetpu/docker/Dockerfile.ubuntu third_party/edgetpu/docker
+	docker build -t $(TAG_ONDEVICE) --build-arg TAG_EDGETPU="${TAG_EDGETPU}" -f docker/Dockerfile.ubuntu docker
 docker-example-shell: docker-example-image
-	docker run --rm -it -v $(ROOT_DIR):/automl-video-ondevice $(TAG_EXAMPLE)
+	docker run --rm -it -v $(ROOT_DIR):/automl-video-ondevice $(TAG_ONDEVICE)
 docker-example-compile: docker-example-image
-	docker run --rm -t -v $(ROOT_DIR):/automl-video-ondevice $(TAG_EXAMPLE) make UID=$(UID) GID=$(GID) -C /automl-video-ondevice all
-all: ondevice ondevice-examples
+	docker run --rm -t -v $(ROOT_DIR):/automl-video-ondevice $(TAG_ONDEVICE) make UID=$(UID) GID=$(GID) -C /automl-video-ondevice all
+all: ondevice ondevice-examples ondevice-py
 
 ondevice: ondevice-k8 ondevice-armv7a ondevice-aarch64
 
@@ -88,6 +91,29 @@ ondevice-examples-aarch64:
 	mkdir -p $(OUT_DIR)/aarch64
 	$(COPY) bazel-out/aarch64-opt/bin/src/libondevice.so $(OUT_DIR)/aarch64/libondevice.so
 	$(COPY) bazel-out/aarch64-opt/bin/examples/ondevice_demo $(OUT_DIR)/aarch64/ondevice_demo
+
+
+ondevice-py: ondevice-py-k8 ondevice-py-armv7a ondevice-py-aarch64
+
+ondevice-py-k8:
+	bazel build $(BAZEL_FLAGS) --cpu=k8 \
+		--linkopt=-L$(CUR_DIR)/third_party/edgetpu/libedgetpu/direct/k8 \
+		//src:automl_ondevice
+	mkdir -p $(OUT_DIR)/k8/py
+	$(COPY) bazel-out/k8-opt/bin/src/automl_ondevice.so $(OUT_DIR)/k8/py/automl_ondevice.so
+ondevice-py-armv7a:
+	bazel build $(BAZEL_FLAGS) --cpu=armv7a \
+		--linkopt=-L$(CUR_DIR)/third_party/edgetpu/libedgetpu/direct/armv7a \
+		//src:automl_ondevice
+	mkdir -p $(OUT_DIR)/armv7a/py
+	$(COPY) bazel-out/armv7a-opt/bin/src/automl_ondevice.so $(OUT_DIR)/armv7a/py/automl_ondevice.so
+ondevice-py-aarch64:
+	bazel build $(BAZEL_FLAGS) --cpu=aarch64 \
+		--linkopt=-L$(CUR_DIR)/third_party/edgetpu/libedgetpu/direct/aarch64 \
+		//src:automl_ondevice
+	mkdir -p $(OUT_DIR)/aarch64/py
+	$(COPY) bazel-out/aarch64-opt/bin/src/automl_ondevice.so $(OUT_DIR)/aarch64/py/automl_ondevice.so
+
 
 clean:
 	rm -rf $(OUT_DIR)
