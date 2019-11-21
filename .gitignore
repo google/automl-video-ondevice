@@ -6,9 +6,11 @@ bazel-bin
 bazel-genfiles
 bazel-out
 bazel-testlogs
+bazel-cache
 
 # Build artifacts.
 bin
+.so
 
 # Inference outputs.
 data/traffic_frames/*.bmp.txt
