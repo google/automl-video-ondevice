@@ -4,10 +4,9 @@ load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
 http_archive(
     name = "bazel_skylib",
-    sha256 = "bbccf674aa441c266df9894182d80de104cabd19be98be002f6d478aaa31574d",
-    strip_prefix = "bazel-skylib-2169ae1c374aab4a09aa90e65efe1a3aad4e279b",
-    urls = ["https://github.com/bazelbuild/bazel-skylib/archive/2169ae1c374aab4a09aa90e65efe1a3aad4e279b.tar.gz"],
-)
+    sha256 = "1dde365491125a3db70731e25658dfdd3bc5dbdfd11b840b3e987ecf043c7ca0",
+    urls = ["https://github.com/bazelbuild/bazel-skylib/releases/download/0.9.0/bazel_skylib-0.9.0.tar.gz"],
+)  # https://github.com/bazelbuild/bazel-skylib/releases
 
 load("@bazel_skylib//lib:versions.bzl", "versions")
 
@@ -24,13 +23,13 @@ http_archive(
 load("@io_bazel_rules_closure//closure:defs.bzl", "closure_repositories")
 closure_repositories()
 
-# ABSL cpp library.
+# ABSL python library.
 http_archive(
-    name = "com_google_absl",
-    sha256 = "d10f684f170eb36f3ce752d2819a0be8cc703b429247d7d662ba5b4b48dd7f65",
-    strip_prefix = "abseil-cpp-3088e76c597e068479e82508b1770a7ad0c806b6",
+    name = "absl_py",
+    # sha256 = "d10f684f170eb36f3ce752d2819a0be8cc703b429247d7d662ba5b4b48dd7f65",
+    strip_prefix = "abseil-py-62b0407d5e6cd3912d2c7d130cffdf6613018260",
     urls = [
-        "https://github.com/abseil/abseil-cpp/archive/3088e76c597e068479e82508b1770a7ad0c806b6.tar.gz",
+        "https://github.com/abseil/abseil-py/archive/62b0407d5e6cd3912d2c7d130cffdf6613018260.zip",
     ],
 )
 
@@ -65,9 +64,9 @@ http_archive(
 http_archive(
     name = "zlib",
     build_file = "@com_google_protobuf//:third_party/zlib.BUILD",
-    sha256 = "c3e5e9fdd5004dcb542feda5ee4f0ff0744628baf8ed2dd5d66f8ca1197cb1a1",
+    sha256 = "629380c90a77b964d896ed37163f5c3a34f6e6d897311f1df2a7016355c45eff",
     strip_prefix = "zlib-1.2.11",
-    urls = ["https://zlib.net/zlib-1.2.11.tar.gz"],
+    urls = ["https://github.com/madler/zlib/archive/v1.2.11.tar.gz"],
 )
 
 http_archive(
@@ -129,6 +128,9 @@ local_repository(
 load("@org_tensorflow//tensorflow:workspace.bzl", "tf_workspace")
 tf_workspace(tf_repo_name = "org_tensorflow")
 
+load("@org_tensorflow//third_party/py:python_configure.bzl", "python_configure")
+python_configure(name = "local_config_python")
+
 # EdgeTPU
 local_repository(
     name = "libedgetpu",
@@ -145,9 +147,21 @@ http_archive(
 )
 
 new_local_repository(
+    name = "python_37",
+    path = "/usr/include/python3.7",
+    build_file_content = """
+package(default_visibility = ["//visibility:public"])
+cc_library(
+    name = "headers",
+    hdrs = glob(["**/*.h"])
+)
+"""
+)
+
+new_local_repository(
     name = "python_linux",
-    path = "/",
-    build_file = "BUILD.python"
+    path = "/usr/include",
+    build_file = "third_party/edgetpu/BUILD.python"
 )
 
 local_repository(
