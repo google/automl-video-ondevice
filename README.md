@@ -19,6 +19,7 @@ environment and setup issues.
 
 ```
 git clone https://github.com/google/automl-video-ondevice
+cd automl-video-ondevice
 git submodule update --init --recursive
 ```
 
