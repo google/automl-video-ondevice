@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""A demo which runs object detection on camera frames.
+r"""A demo which runs object detection on camera frames.
 
 Requires cv2 from `sudo apt-get install python3-opencv`
 
@@ -22,21 +22,11 @@ python3 opencv_camera_demo \
 Press Q key to exit.
 """
 import argparse
-import os
-import re
 import time
 import automl_ondevice
-import numpy as np
 import cv2
 
 current_milli_time = lambda: int(round(time.time() * 1000))
-
-
-def load_labels(path):
-  p = re.compile(r'\s*(\d+)(.+)')
-  with open(path, 'r', encoding='utf-8') as f:
-    lines = (p.match(line).groups() for line in f.readlines())
-    return {int(num): text.strip() for num, text in lines}
 
 
 def main():
@@ -54,6 +44,10 @@ def main():
       'If both are plugged in, the USB camera will have the ID "1".',
       type=int,
       default=-1)
+  parser.add_argument(
+      '--video_width', help='Input video width.', type=int, default=1280)
+  parser.add_argument(
+      '--video_height', help='Input video height.', type=int, default=720)
   args = parser.parse_args()
 
   print('Loading %s with %s labels.' % (args.model, args.labels))
@@ -70,15 +64,15 @@ def main():
         'v4l2src device=/dev/video{} ! videoconvert ! '
         'videoscale method=0 add-borders=false ! '
         'video/x-raw, width={}, height={}, format=RGB ! videoconvert ! '
-        'appsink'.format(args.video_device, input_size.width,
-                         input_size.height), cv2.CAP_GSTREAMER)
+        'appsink'.format(args.video_device, args.video_width,
+                         args.video_height), cv2.CAP_GSTREAMER)
   else:
     cap = cv2.VideoCapture(
         'nvarguscamerasrc ! nvvidconv ! '
         'video/x-raw, format=(string)BGRx ! videoconvert ! '
         'videoscale method=0 add-borders=false ! '
         'video/x-raw, width={}, height={}, format=RGB ! videoconvert ! '
-        'appsink'.format(input_size.width, input_size.height),
+        'appsink'.format(args.video_width, args.video_height),
         cv2.CAP_GSTREAMER)
 
   while cap.isOpened():
@@ -86,12 +80,15 @@ def main():
     if not ret:
       break
 
+    # Resizes frame.
+    resized_frame = cv2.resize(frame, (input_size.width, input_size.height))
+
     # Grabs current millisecond for timestamp.
     timestamp = current_milli_time()
 
-    # Runs inference engine to populate annotations array.
+    # Runs inference engine on resized frame to populate annotations array.
     annotations = []
-    if engine.run(timestamp, frame, annotations):
+    if engine.run(timestamp, resized_frame, annotations):
       frame = append_objs_to_img(frame, annotations)
 
     cv2.imshow('frame', frame)
