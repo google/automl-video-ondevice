@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""A demo which runs object detection on camera frames.
+r"""A demo which runs object detection on camera frames.
 
 Requires cv2 from `sudo apt-get install python3-opencv`
 
@@ -22,21 +22,12 @@ python3 opencv_camera_demo \
 Press Q key to exit.
 """
 import argparse
-import os
-import re
 import time
 import automl_ondevice
 import cv2
 from PIL import Image
 
 current_milli_time = lambda: int(round(time.time() * 1000))
-
-
-def load_labels(path):
-  p = re.compile(r'\s*(\d+)(.+)')
-  with open(path, 'r', encoding='utf-8') as f:
-    lines = (p.match(line).groups() for line in f.readlines())
-    return {int(num): text.strip() for num, text in lines}
 
 
 def main():

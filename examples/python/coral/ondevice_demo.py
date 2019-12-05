@@ -11,8 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""
-Before running, please copy libedgetpu.so and automl_ondevice.so to the same
+"""Before running, please copy libedgetpu.so and automl_ondevice.so to the same
+
 folder as this python script.
 
 cp ../../third_party/edgetpu/libedgetpu/direct/k8/libedgetpu.so.1 .
