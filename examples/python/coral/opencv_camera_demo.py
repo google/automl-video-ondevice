@@ -48,6 +48,7 @@ def main():
   engine = automl_ondevice.ObjectTrackingInference.TFLiteModel(
       args.model, args.labels, config)
   input_size = engine.getInputSize()
+  fps_time_queue = []  # Used to calculate FPS.
 
   cap = cv2.VideoCapture(0)
 
@@ -68,6 +69,24 @@ def main():
     annotations = []
     if engine.run(timestamp, pil_im, annotations):
       cv2_im = append_objs_to_img(cv2_im, annotations)
+
+    # Calculate FPS based on sample size of 15.
+    fps_time_queue.append(timestamp)
+    if len(fps_time_queue) > 15:
+      fps_time_queue.pop(0)
+    if len(fps_time_queue) > 2:
+      fps = round(
+          len(fps_time_queue) / (fps_time_queue[-1] - fps_time_queue[0]) * 1000,
+          2)
+      latency = round(fps_time_queue[-1] - fps_time_queue[-2], 4)
+    else:
+      fps = 'N/A'
+      latency = 'N/A'
+
+    cv2_im = cv2.putText(cv2_im, '{} fps'.format(fps), (0, 20),
+                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+    cv2_im = cv2.putText(cv2_im, '{} ms'.format(latency), (0, 40),
+                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
     cv2.imshow('frame', cv2_im)
     if cv2.waitKey(1) & 0xFF == ord('q'):
