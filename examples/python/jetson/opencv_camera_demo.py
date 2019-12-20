@@ -58,6 +58,7 @@ def main():
   # Tensorflow frozen graph inferencing does not restrain the input size,
   # so this is merely a suggestion.
   input_size = engine.getInputSize()
+  fps_time_queue = []  # Used to calculate FPS.
 
   if args.video_device >= 0:
     cap = cv2.VideoCapture(
@@ -90,6 +91,24 @@ def main():
     annotations = []
     if engine.run(timestamp, resized_frame, annotations):
       frame = append_objs_to_img(frame, annotations)
+
+    # Calculate FPS based on sample size of 15.
+    fps_time_queue.append(timestamp)
+    if len(fps_time_queue) > 15:
+      fps_time_queue.pop(0)
+    if len(fps_time_queue) > 2:
+      fps = round(
+          len(fps_time_queue) / (fps_time_queue[-1] - fps_time_queue[0]) * 1000,
+          2)
+      latency = round(fps_time_queue[-1] - fps_time_queue[-2], 4)
+    else:
+      fps = 'N/A'
+      latency = 'N/A'
+
+    frame = cv2.putText(frame, '{} fps'.format(fps), (0, 20),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+    frame = cv2.putText(frame, '{} ms'.format(latency), (0, 40),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
     cv2.imshow('frame', frame)
 
