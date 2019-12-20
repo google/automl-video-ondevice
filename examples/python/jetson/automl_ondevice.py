@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import tensorflow.contrib.tensorrt as trt
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 import numpy as np
 import json
 
