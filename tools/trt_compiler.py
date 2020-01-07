@@ -20,7 +20,7 @@ python3 trt_compiler \
 """
 import argparse
 import os
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 import tensorflow.contrib.tensorrt as trt
 
 
