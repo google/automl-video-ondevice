@@ -1,3 +1,4 @@
+# Lint as: python3
 # Copyright 2019 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -11,49 +12,43 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import tensorflow.contrib.tensorrt as trt
-import tensorflow.compat.v1 as tf
+# ==============================================================================
+"""Provides an implementation of object tracking using TF and TF-TRT."""
+
 import numpy as np
-import json
+import tensorflow.compat.v1 as tf
+from automl_video_ondevice.object_tracking.base_object_detection import BaseObjectDetectionInference
+from automl_video_ondevice.object_tracking.types import NormalizedBoundingBox
+from automl_video_ondevice.object_tracking.types import ObjectTrackingAnnotation
+from automl_video_ondevice.object_tracking.types import Size
+
+import automl_video_ondevice.object_tracking.utils as vot_utils
+import tensorflow.contrib.tensorrt as trt  
 
 
-class ObjectTrackingConfig:
+class TFObjectDetectionInference(BaseObjectDetectionInference):
+  """Implementation of the BaseObjectDetectionInference using TF, or TF-TRT.
 
-  def __init__(self, score_threshold=0.0, max_detections=100):
-    self.score_threshold = score_threshold
-    self.max_detections = max_detections
+  TF-TRT is a hybrid solution, converting a sub-section of the Tensorflow graph
+  into it's proprietary TensorRT format. This allows for maximum usage of
+  NVIDIA devices while keeping full Tensorflow support.
 
-
-class ObjectTrackingInference:
+  Non-TRT frozen graphs can also be used with this implementation.
+  """
 
   def __init__(self, frozen_graph_path, label_map_path, config):
     self.config = config
 
-    self._loadLabelMap(label_map_path)
-    self._loadFrozenGraph(frozen_graph_path)
+    self._load_label_map(label_map_path)
+    self._load_frozen_graph(frozen_graph_path)
 
-  def __del__(self):
-    self.session.close()
+  def _load_label_map(self, label_map_path):
+    with open(label_map_path, 'r') as f:
+      self.label_map, _ = vot_utils.parse_label_map(f.read())
 
-  @staticmethod
-  def TFTRTModel(*args, **kwargs):
-    return ObjectTrackingInference(*args, **kwargs)
-
-  def _loadLabelMap(self, label_map_path):
-    with tf.gfile.GFile(label_map_path, 'r') as f:
-      # Converts the pbtxt into a JSON file and then parses it.
-      parsed_label_map = json.loads(
-          '[' + f.read().replace('\n}\nitem {\n', '\n}, \n{\n').replace(
-              "\n  name: \"", "\n  \"name\": \"").replace(
-                  '\n  id: ', ",\n  \"id\": ")[5:] + ']')
-
-    self.label_map = dict()
-    for item in parsed_label_map:
-      self.label_map[item['id']] = item['name']
-
-  def _loadFrozenGraph(self, frozen_graph_path):
+  def _load_frozen_graph(self, frozen_graph_path):
     trt_graph = tf.GraphDef()
-    with tf.gfile.GFile(frozen_graph_path, 'rb') as f:
+    with open(frozen_graph_path, 'rb') as f:
       trt_graph.ParseFromString(f.read())
 
     self.graph = tf.Graph()
@@ -80,7 +75,7 @@ class ObjectTrackingInference:
     self.lstm_c = np.ones((1, 8, 8, 320))
     self.lstm_h = np.ones((1, 8, 8, 320))
 
-  def getInputSize(self):
+  def input_size(self):
     return Size(256, 256)
 
   def run(self, timestamp, frame, annotations):
@@ -118,34 +113,3 @@ class ObjectTrackingInference:
         annotations.append(annotation)
 
     return True
-
-  def getTFSession(self):
-    return self.session
-
-
-class Size:
-
-  def __init__(self, width, height):
-    self.width = width
-    self.height = height
-
-
-class NormalizedBoundingBox:
-
-  def __init__(self, left, top, right, bottom):
-    self.left = left
-    self.top = top
-    self.right = right
-    self.bottom = bottom
-
-
-class ObjectTrackingAnnotation:
-
-  def __init__(self, timestamp, track_id, class_id, class_name,
-               confidence_score, bbox):
-    self.timestamp = timestamp
-    self.track_id = track_id
-    self.class_id = class_id
-    self.class_name = class_name
-    self.confidence_score = confidence_score
-    self.bbox = bbox
