@@ -11,27 +11,37 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Before running, please copy libedgetpu.so and automl_ondevice.so to the same
+"""Loops through the images in the data folder and prints the bounding box output.
 
-folder as this python script.
+For Jetson devices, you must specify a .pb model:
+  python3 examples/image_demo.py --model=data/traffic_model_tftrt.pb
 
-cp ../../third_party/edgetpu/libedgetpu/direct/k8/libedgetpu.so.1 .
-cp ../../bin/k8/py/automl_ondevice.so .
-python3 ondevice_demo.py
+For Coral devices, you must specify a tflite or _edgetpu.tflite model:
+  python3 examples/image_demo.py --model=data/traffic_model_edgetpu.tflite
 """
 
-import automl_ondevice
+import argparse
 from PIL import Image
+from automl_video_ondevice import object_tracking as vot
+
+default_model = 'data/traffic_model_edgetpu.tflite'
+default_labels = 'data/traffic_label_map.pbtxt'
 
 if __name__ == '__main__':
-  config = automl_ondevice.ObjectTrackingConfig(score_threshold=0.2)
-  engine = automl_ondevice.ObjectTrackingInference.TFLiteModel(
-      '../../data/traffic_model.tflite', '../../data/traffic_label_map.pbtxt',
-      config)
-  input_size = engine.getInputSize()
+  parser = argparse.ArgumentParser()
+  parser.add_argument('--model', help='model path', default=default_model)
+  parser.add_argument(
+      '--labels', help='label file path', default=default_labels)
+  parser.add_argument(
+      '--threshold', type=float, default=0.2, help='class score threshold')
+  args = parser.parse_args()
+
+  config = vot.ObjectTrackingConfig(score_threshold=args.threshold)
+  engine = vot.load(args.model, args.labels, config)
+  input_size = engine.input_size()
 
   for i in range(1, 9):
-    image = Image.open('../../data/traffic_frames/000%d.bmp' %
+    image = Image.open('data/traffic_frames/000%d.bmp' %
                        i).convert('RGB').resize(
                            (input_size.width, input_size.height))
 
