@@ -1,114 +1,104 @@
-# AutoML Video On-Device Examples
+# AutoML Video Edge Library
 
-The example code that shows how to load the Google Cloud AutoML Video Object
-Tracking On-Device models and conduct inference on a sequence of images from a
-video clip.
+AutoML Video Edge Library is an open source engine used for inferencing models
+trained using AutoML Video. It supports running Tensorflow, TF-TRT, TFLite, and
+EdgeTPU-optimized TFLite models.
 
-The targeted devices are CPU and Edge TPU.
+I'm Developing For:
 
----
+* [Linux Desktop](#for-linux-desktop)
+* [Coral Device](#for-coral-device)
+* [NVIDIA Jetson](#for-nvidia-jetson)
 
-## Dependencies
+# For Linux Desktop
+-------------------
 
-Docker (>= 18.09.3)
+If you are looking to do inferencing with no additional hardware, using only CPU
+then you may use the vanilla Tensorflow (.pb) and TFLite (.tflite) models.
 
-Docker is used to simplify the development process and avoid any
-environment and setup issues.
-
-## Getting the Code
-
-```
-git clone https://github.com/google/automl-video-ondevice
-git submodule update --init --recursive
-```
-
-## Building Examples
-
-To build the example in one-shot:
+## Prerequisites
 
 ```
-make docker-example-compile
+sudo apt-get update
+sudo apt-get install python3.7
+sudo apt-get install python3-pip
+pip3 install opencv-contrib-python --user
+pip3 install numpy
 ```
 
-## Developing
+Note: opencv-contrib-python is only necessary for the examples, but can be
+excluded if only the library is being used.
 
-The above command will instantly remove all build artifacts and caches
-upon completion, and can be slow for active development.
+If you plan on running TFLite models on the desktop, install the TFLite
+interpreter: https://www.tensorflow.org/lite/guide/python
 
-For development, launch a docker shell instead:
+If you plan on running Tensorflow models on desktop:  
+`pip3 install tensorflow==1.14`
 
-```
-make docker-example-shell
-cd automl-video-ondevice
-```
+## Get the Code
 
-Then to build:
+`git clone https://github.com/google/automl-video-ondevice`
 
-```
-make ondevice-examples-${CPU}
-```
+After that is done downloading, move into the directory.  
+`cd automl-video-ondevice`
 
-Where CPU can be:
+## Running an Example
 
-* k8
-* armv7a
-* aarch64 (Common for Coral EdgeTPU devices.)
+For TFLite:  
+`python3 examples/video_file_demo.py --model=data/traffic_model.tflite`
 
-## Running
+For Tensorflow:  
+`python3 examples/video_file_demo.py --model=data/traffic_model.pb`
 
-### For Linux Desktop
+# For Coral Device
+-------------------
 
+## Prerequisites
 
-```
-./bin/k8/ondevice_demo --alsologtostderr \
-  --model_file_path=./data/traffic_model.tflite \
-  --label_map_file_path=./data/traffic_label_map.pbtxt \
-  --images_file_path=./data/traffic_frames
-```
+Make sure you've setup your coral device:
+https://coral.ai/docs/setup
 
-### For Coral Dev Board
-
-The binary and test data must be deployed to the device:
+Install the TFLite runtime on your device:
+https://www.tensorflow.org/lite/guide/python
 
 ```
-scp bin/aarch64/libondevice.so mendel@192.168.100.2:~/libondevice.so
-scp bin/aarch64/ondevice_demo mendel@192.168.100.2:~/ondevice_demo_aarch64
-scp -r data mendel@192.168.100.2:~/data
+sudo apt-get update
+sudo apt-get install git
+sudo apt-get install python3-opencv
+pip3 install numpy
 ```
 
-Then SSH into the device:
+## Get the Code
+
+`git clone https://github.com/google/automl-video-ondevice`
+
+After that is done downloading, move into the directory.  
+`cd automl-video-ondevice`
+
+## Running an Example
+
+`python3 examples/video_file_demo.py --model=data/traffic_model_edgetpu.tflite`
+
+# For NVIDIA Jetson
+-------------------
+
+## Prerequisites
 
 ```
-ssh mendel@192.168.100.2
+sudo apt-get update
+sudo apt-get install git
+sudo apt-get install python3-pip
+sudo apt-get install python3-opencv
+pip3 install numpy
 ```
 
-Finally, running inference:
+## Get the Code
 
-```
-cd ~
-./ondevice_demo_aarch64 --alsologtostderr \
-  --model_file_path=./data/traffic_model_edgetpu.tflite \
-  --label_map_file_path=./data/traffic_label_map.pbtxt \
-  --images_file_path=./data/traffic_frames
-```
+`git clone https://github.com/google/automl-video-ondevice`
 
-The output can be pulled out with the following command:
+After that is done downloading, move into the directory.  
+`cd automl-video-ondevice`
 
-```
-scp -r mendel@192.168.100.2:~/data /tmp/coral-output
-```
+## Running an Example
 
-## Visualization
-
-Running `./ondevice_demo_*` will create .txt files with the classes, score, and
-bounding boxes. To visualize the output, you may run the following command
-while still in the docker shell (or on the host if you have bazel installed):
-
-```
-bazel run //tools:visualizer -- \
-  --image_path="`pwd`/data/traffic_frames/*.bmp" \
-  --output_path=/tmp/output
-```
-
-Note that bazel does not execute from the working directory, so the paths are
-prefixed with \`pwd\`. This is not necessary if an absolute path is given.
+`python3 examples/video_file_demo.py --model=data/traffic_model_trt.pb`
