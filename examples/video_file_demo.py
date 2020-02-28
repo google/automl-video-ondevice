@@ -46,8 +46,8 @@ Press Q key to exit.
 """
 import argparse
 import time
-import utils
 from automl_video_ondevice import object_tracking as vot
+import utils
 
 try:
   import cv2  

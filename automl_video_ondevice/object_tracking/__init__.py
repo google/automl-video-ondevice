@@ -19,11 +19,13 @@ Based on filename, the loader will instantiate an inference engine.
 """
 
 from automl_video_ondevice.object_tracking.base_object_detection import BaseObjectDetectionInference
+from automl_video_ondevice.object_tracking.camshift_object_tracker import CamshiftObjectTracker
 from automl_video_ondevice.object_tracking.config import ObjectTrackingConfig
 from automl_video_ondevice.object_tracking.types import Format
 from automl_video_ondevice.object_tracking.types import NormalizedBoundingBox
 from automl_video_ondevice.object_tracking.types import ObjectTrackingAnnotation
 from automl_video_ondevice.object_tracking.types import Size
+from automl_video_ondevice.object_tracking.types import Tracker
 from automl_video_ondevice.object_tracking.utils import format_from_filename
 
 
@@ -52,16 +54,25 @@ def load(frozen_graph_path,
   print('Loading: {} <{}> {}'.format(frozen_graph_path, file_format,
                                      label_map_path))
 
+  engine = None
+
   # Some modules may never even be loaded. Only hotloads what is necessary.
   
   if file_format == Format.TFLITE:
     from automl_video_ondevice.object_tracking.tflite_object_detection import TFLiteObjectDetectionInference
-    return TFLiteObjectDetectionInference(frozen_graph_path, label_map_path,
-                                          config)
-  if file_format == Format.TENSORFLOW:
+    engine = TFLiteObjectDetectionInference(frozen_graph_path, label_map_path,
+                                            config)
+  elif file_format == Format.TENSORFLOW:
     from automl_video_ondevice.object_tracking.tf_object_detection import TFObjectDetectionInference
-    return TFObjectDetectionInference(frozen_graph_path, label_map_path, config)
+    engine = TFObjectDetectionInference(frozen_graph_path, label_map_path,
+                                        config)
+  else:
+    engine = BaseObjectDetectionInference(None, None, None)
   
 
-  # Following is added or else pytype is confused.
-  return BaseObjectDetectionInference(None, None, None)
+  if config.tracker == Tracker.FAST_INACCURATE:
+    return CamshiftObjectTracker(engine, config)
+  elif not config.tracker or config.tracker == Tracker.NONE:
+    return engine
+  else:
+    raise NotImplementedError('Invalid or unimplemented tracker type.')

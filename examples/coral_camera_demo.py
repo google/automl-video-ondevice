@@ -26,8 +26,8 @@ Press Q key to exit.
 import argparse
 import time
 from PIL import Image
-import utils
 from automl_video_ondevice import object_tracking as vot
+import utils
 
 try:
   import cv2  
@@ -47,11 +47,16 @@ def main():
       '--labels', help='label file path', default=default_labels)
   parser.add_argument(
       '--threshold', type=float, default=0.2, help='class score threshold')
+  parser.add_argument(
+      '--use_tracker', type=bool, default=False, help='use an object tracker')
   args = parser.parse_args()
 
   print('Loading %s with %s labels.' % (args.model, args.labels))
 
-  config = vot.ObjectTrackingConfig(score_threshold=args.threshold)
+  config = vot.ObjectTrackingConfig(
+      score_threshold=args.threshold,
+      tracker=vot.Tracker.FAST_INACCURATE
+      if args.use_tracker else vot.Tracker.NONE)
   engine = vot.load(args.model, args.labels, config)
   input_size = engine.input_size()
   fps_calculator = utils.FpsCalculator()

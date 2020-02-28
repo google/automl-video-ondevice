@@ -25,8 +25,8 @@ Press Q key to exit.
 """
 import argparse
 import time
-import utils
 from automl_video_ondevice import object_tracking as vot
+import utils
 
 try:
   import cv2  
@@ -46,6 +46,8 @@ def main():
   parser.add_argument(
       '--threshold', type=float, default=0.25, help='class score threshold')
   parser.add_argument(
+      '--use_tracker', type=bool, default=False, help='use an object tracker')
+  parser.add_argument(
       '--video_device',
       help='-1 for ribbon-cable camera. >= 0 for USB camera. '
       'If both are plugged in, the USB camera will have the ID "1".',
@@ -59,7 +61,10 @@ def main():
 
   print('Loading %s with %s labels.' % (args.model, args.labels))
 
-  config = vot.ObjectTrackingConfig(score_threshold=args.threshold)
+  config = vot.ObjectTrackingConfig(
+      score_threshold=args.threshold,
+      tracker=vot.Tracker.FAST_INACCURATE
+      if args.use_tracker else vot.Tracker.NONE)
   engine = vot.load(args.model, args.labels, config)
   input_size = engine.input_size()
   fps_calculator = utils.FpsCalculator()

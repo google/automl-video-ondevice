@@ -15,10 +15,13 @@
 # ==============================================================================
 """Public configuration parameters for object tracking."""
 
+import dataclasses
+from automl_video_ondevice.object_tracking.types import Tracker
 
+
+@dataclasses.dataclass
 class ObjectTrackingConfig:
-
-  def __init__(self, score_threshold=0.0, max_detections=100, device=None):
-    self.score_threshold = score_threshold
-    self.max_detections = max_detections
-    self.device = device
+  score_threshold: float = 0.0
+  max_detections: int = 100
+  device: str = ""
+  tracker: Tracker = Tracker.NONE

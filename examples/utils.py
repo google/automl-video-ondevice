@@ -17,6 +17,20 @@
 
 import time
 import cv2
+import numpy as np
+
+colors = [(np.random.uniform(0, 255), np.random.uniform(0, 255),
+           np.random.uniform(0, 255)),
+          (np.random.uniform(0, 255), np.random.uniform(0, 255),
+           np.random.uniform(0, 255)),
+          (np.random.uniform(0, 255), np.random.uniform(0, 255),
+           np.random.uniform(0, 255)),
+          (np.random.uniform(0, 255), np.random.uniform(0, 255),
+           np.random.uniform(0, 255)),
+          (np.random.uniform(0, 255), np.random.uniform(0, 255),
+           np.random.uniform(0, 255)),
+          (np.random.uniform(0, 255), np.random.uniform(0, 255),
+           np.random.uniform(0, 255))]
 
 
 def render_bbox(image, annotations):
@@ -39,7 +53,12 @@ def render_bbox(image, annotations):
     percent = int(100 * annotation.confidence_score)
     label = '%d%% %s' % (percent, annotation.class_name)
 
-    image = cv2.rectangle(image, (x0, y0), (x1, y1), (0, 255, 0), 2)
+    if annotation.track_id == -1:
+      color = (0, 255, 0)
+    else:
+      color = colors[annotation.track_id % len(colors)]
+
+    image = cv2.rectangle(image, (x0, y0), (x1, y1), color, 2)
     image = cv2.putText(image, label, (x0, y0 + 30), cv2.FONT_HERSHEY_SIMPLEX,
                         1.0, (255, 0, 0), 2)
   return image

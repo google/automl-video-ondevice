@@ -15,21 +15,42 @@
 # ==============================================================================
 """The structs and types used for object tracking."""
 
-import collections
 import enum
+import dataclasses
 
-Size = collections.namedtuple("Size", ["width", "height"])
 
-NormalizedBoundingBox = collections.namedtuple(
-    "NormalizedBoundingBox", ["left", "top", "right", "bottom"])
+@dataclasses.dataclass
+class Size:
+  width: int
+  height: int
 
-ObjectTrackingAnnotation = collections.namedtuple("ObjectTrackingAnnotation", [
-    "timestamp", "track_id", "class_id", "class_name", "confidence_score",
-    "bbox"
-])
+
+@dataclasses.dataclass
+class NormalizedBoundingBox:
+  left: float
+  top: float
+  right: float
+  bottom: float
+
+
+@dataclasses.dataclass
+class ObjectTrackingAnnotation:
+  timestamp: float
+  track_id: int
+  class_id: int
+  class_name: str
+  confidence_score: float
+  bbox: NormalizedBoundingBox
 
 
 class Format(enum.Enum):
   UNDEFINED = 0
   TFLITE = 1
   TENSORFLOW = 2
+
+
+class Tracker(enum.Enum):
+  NONE = 0
+  FAST_INACCURATE = 1
+  BASIC = 2
+  HIGH_QUALITY_SLOW = 3
