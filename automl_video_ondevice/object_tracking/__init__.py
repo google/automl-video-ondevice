@@ -72,6 +72,9 @@ def load(frozen_graph_path,
 
   if config.tracker == Tracker.FAST_INACCURATE:
     return CamshiftObjectTracker(engine, config)
+  elif config.tracker == Tracker.BASIC:
+    from automl_video_ondevice.object_tracking.mediapipe_object_tracker import MediaPipeObjectTracker  
+    return MediaPipeObjectTracker(engine, config)
   elif not config.tracker or config.tracker == Tracker.NONE:
     return engine
   else:

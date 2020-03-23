@@ -55,7 +55,7 @@ def main():
 
   config = vot.ObjectTrackingConfig(
       score_threshold=args.threshold,
-      tracker=vot.Tracker.FAST_INACCURATE
+      tracker=vot.Tracker.BASIC
       if args.use_tracker else vot.Tracker.NONE)
   engine = vot.load(args.model, args.labels, config)
   input_size = engine.input_size()
