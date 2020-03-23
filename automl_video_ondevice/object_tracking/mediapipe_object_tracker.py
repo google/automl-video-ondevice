@@ -21,7 +21,11 @@ from automl_video_ondevice.object_tracking.types import NormalizedBoundingBox
 from automl_video_ondevice.object_tracking.types import ObjectTrackingAnnotation
 
 try:
-  import automl_video_ondevice.object_tracking.mediapipe_tracker as mediapipe_tracker  
+  import platform
+  if platform.machine().lower() == 'aarch64':
+    from automl_video_ondevice.object_tracking.mediapipe_tracker.aarch64 import mediapipe_tracker  
+  else:
+    raise ImportError('Unsupported architecture.')
 except ImportError:
   raise RuntimeError(
       'The basic tracker is not publicly available yet, '
