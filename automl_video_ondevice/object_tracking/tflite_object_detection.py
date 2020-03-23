@@ -71,6 +71,12 @@ class TFLiteObjectDetectionInference(BaseObjectDetectionInference):
             'Warning: EdgeTPU library not found. You can still run CPU models, '
             'but if you have a Coral device make sure you set it up: '
             'https://coral.ai/docs/setup/.')
+    except ValueError as e:
+      if 'Failed to load delegate from ' in str(e):
+        print(
+            'Warning: EdgeTPU library not found. You can still run CPU models, '
+            'but if you have a Coral device make sure you set it up: '
+            'https://coral.ai/docs/setup/.')
 
     try:
       self._interpreter = tflite.Interpreter(

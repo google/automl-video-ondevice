@@ -45,7 +45,6 @@ python3 examples/video_file_demo.py \
 Press Q key to exit.
 """
 import argparse
-import time
 from automl_video_ondevice import object_tracking as vot
 import utils
 
@@ -53,8 +52,6 @@ try:
   import cv2  
 except:  
   print("Couldn't load cv2. Try running: sudo apt install python3-opencv.")
-
-current_milli_time = lambda: int(round(time.time() * 1000))
 
 
 def main():
@@ -71,11 +68,15 @@ def main():
       '--output_video', help='output video file path', default='')
   parser.add_argument(
       '--threshold', type=float, default=0.2, help='class score threshold')
+  parser.add_argument(
+      '--use_tracker', type=bool, default=False, help='use an object tracker')
   args = parser.parse_args()
 
   print('Loading %s with %s labels.' % (args.model, args.labels))
 
-  config = vot.ObjectTrackingConfig(score_threshold=args.threshold)
+  config = vot.ObjectTrackingConfig(
+      score_threshold=args.threshold,
+      tracker=vot.Tracker.BASIC if args.use_tracker else vot.Tracker.NONE)
   engine = vot.load(args.model, args.labels, config)
   input_size = engine.input_size()
 
@@ -83,12 +84,12 @@ def main():
 
   writer = None
   if cap.isOpened() and args.output_video:
-    writer = cv2.VideoWriter(args.output_video,
-                             int(cap.get(cv2.CAP_PROP_FOURCC)),
+    writer = cv2.VideoWriter(args.output_video, cv2.VideoWriter_fourcc(*'mp4v'),
                              cap.get(cv2.CAP_PROP_FPS),
                              (int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)),
                               int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))))
 
+  timestamp = 0
   while cap.isOpened():
     ret, frame = cap.read()
 
@@ -98,8 +99,8 @@ def main():
     # Resizes frame.
     resized_frame = cv2.resize(frame, (input_size.width, input_size.height))
 
-    # Grabs current millisecond for timestamp.
-    timestamp = current_milli_time()
+    # Calculates current microsecond for timestamp.
+    timestamp = int(timestamp + (1/cap.get(cv2.CAP_PROP_FPS)) * 1000 * 1000)
 
     # Run inference engine to populate annotations array.
     annotations = []
@@ -115,8 +116,9 @@ def main():
 
   if writer:
     writer.release()
+  else:
+    cv2.destroyAllWindows()
   cap.release()
-  cv2.destroyAllWindows()
 
 
 if __name__ == '__main__':
