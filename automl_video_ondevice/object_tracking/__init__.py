@@ -1,5 +1,5 @@
 # Lint as: python3
-# Copyright 2019 Google LLC
+# Copyright 2020 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,12 +21,12 @@ Based on filename, the loader will instantiate an inference engine.
 from automl_video_ondevice.object_tracking.base_object_detection import BaseObjectDetectionInference
 from automl_video_ondevice.object_tracking.camshift_object_tracker import CamshiftObjectTracker
 from automl_video_ondevice.object_tracking.config import ObjectTrackingConfig
-from automl_video_ondevice.object_tracking.types import Format
-from automl_video_ondevice.object_tracking.types import NormalizedBoundingBox
-from automl_video_ondevice.object_tracking.types import ObjectTrackingAnnotation
-from automl_video_ondevice.object_tracking.types import Size
-from automl_video_ondevice.object_tracking.types import Tracker
-from automl_video_ondevice.object_tracking.utils import format_from_filename
+from automl_video_ondevice.types import Format
+from automl_video_ondevice.types import NormalizedBoundingBox
+from automl_video_ondevice.types import ObjectTrackingAnnotation
+from automl_video_ondevice.types import Size
+from automl_video_ondevice.types import Tracker
+from automl_video_ondevice.utils import format_from_filename
 
 
 def load(frozen_graph_path,
@@ -68,7 +68,6 @@ def load(frozen_graph_path,
                                         config)
   else:
     engine = BaseObjectDetectionInference(None, None, None)
-  
 
   if config.tracker == Tracker.FAST_INACCURATE:
     return CamshiftObjectTracker(engine, config)
@@ -79,3 +78,4 @@ def load(frozen_graph_path,
     return engine
   else:
     raise NotImplementedError('Invalid or unimplemented tracker type.')
+  

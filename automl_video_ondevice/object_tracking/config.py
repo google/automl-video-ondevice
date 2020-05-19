@@ -1,5 +1,5 @@
 # Lint as: python3
-# Copyright 2019 Google LLC
+# Copyright 2020 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 """Public configuration parameters for object tracking."""
 
 import dataclasses
-from automl_video_ondevice.object_tracking.types import Tracker
+from automl_video_ondevice.types import Tracker
 
 
 @dataclasses.dataclass

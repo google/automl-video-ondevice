@@ -1,5 +1,5 @@
 # Lint as: python3
-# Copyright 2019 Google LLC
+# Copyright 2020 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 # ==============================================================================
 """Provides the base class for implementing video object tracking inference."""
 
-from automl_video_ondevice.object_tracking.types import Size
+from automl_video_ondevice.types import Size
 
 
 class BaseObjectDetectionInference:

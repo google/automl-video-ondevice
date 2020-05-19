@@ -1,5 +1,5 @@
 # Lint as: python3
-# Copyright 2019 Google LLC
+# Copyright 2020 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,11 +26,11 @@ except:
 		print("Can't find the TFLite runtime. Follow directions here: https://www.tensorflow.org/lite/guide/python")
 import platform
 from automl_video_ondevice.object_tracking.base_object_detection import BaseObjectDetectionInference
-from automl_video_ondevice.object_tracking.types import NormalizedBoundingBox
-from automl_video_ondevice.object_tracking.types import ObjectTrackingAnnotation
-from automl_video_ondevice.object_tracking.types import Size
+from automl_video_ondevice.types import NormalizedBoundingBox
+from automl_video_ondevice.types import ObjectTrackingAnnotation
+from automl_video_ondevice.types import Size
 
-import automl_video_ondevice.object_tracking.utils as vot_utils
+import automl_video_ondevice.utils as vot_utils
 
 EDGETPU_SHARED_LIB = {
   'Linux': 'libedgetpu.so.1',
@@ -95,8 +95,15 @@ class TFLiteObjectDetectionInference(BaseObjectDetectionInference):
                            'sure you set it up: https://coral.ai/docs/setup/.')
       else:
         raise e
-    self._lstm_c = np.copy(self.input_tensor(1))
-    self._lstm_h = np.copy(self.input_tensor(2))
+    self._is_lstm = self._check_lstm()
+    if self._is_lstm:
+      print('Loading an LSTM model.')
+      self._lstm_c = np.copy(self.input_tensor(1))
+      self._lstm_h = np.copy(self.input_tensor(2))
+
+  def _check_lstm(self):
+    return len(self._interpreter.get_input_details()) > 1 and len(
+        self._interpreter.get_output_details()) > 4
 
   def input_size(self):
     _, height, width, _ = self._interpreter.get_input_details()[0]['shape']
@@ -113,12 +120,14 @@ class TFLiteObjectDetectionInference(BaseObjectDetectionInference):
 
   def fill_inputs(self, frame):
     input_image = self.input_tensor(0)
-    input_lstm_c = self.input_tensor(1)
-    input_lstm_h = self.input_tensor(2)
+    if self._is_lstm:
+      input_lstm_c = self.input_tensor(1)
+      input_lstm_h = self.input_tensor(2)
 
     np.copyto(input_image, frame)
-    np.copyto(input_lstm_c, self._lstm_c)
-    np.copyto(input_lstm_h, self._lstm_h)
+    if self._is_lstm:
+      np.copyto(input_lstm_c, self._lstm_c)
+      np.copyto(input_lstm_h, self._lstm_h)
 
   def run(self, timestamp, frame, annotations):
     # Interpreter hates it when native tensors are retained.
@@ -130,11 +139,12 @@ class TFLiteObjectDetectionInference(BaseObjectDetectionInference):
     classes = self.output_tensor(1)
     scores = self.output_tensor(2)
     num_detections = self.output_tensor(3)
-    output_lstm_c = self.output_tensor(4)
-    output_lstm_h = self.output_tensor(5)
+    if self._is_lstm:
+      output_lstm_c = self.output_tensor(4)
+      output_lstm_h = self.output_tensor(5)
 
-    np.copyto(self._lstm_c, output_lstm_c)
-    np.copyto(self._lstm_h, output_lstm_h)
+      np.copyto(self._lstm_c, output_lstm_c)
+      np.copyto(self._lstm_h, output_lstm_h)
 
     for i in range(int(num_detections)):
       box = boxes[i]

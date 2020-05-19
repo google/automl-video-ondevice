@@ -1,4 +1,5 @@
-# Copyright 2019 Google LLC
+# Lint as: python3
+# Copyright 2020 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -45,13 +46,19 @@ def main():
     downgrade_equal_op(frozen_graph)
     downgrade_nmv5_op(frozen_graph)
 
+  is_lstm = check_lstm(frozen_graph)
+  if is_lstm:
+    print('Converting LSTM model.')
+
   trt_graph = trt.create_inference_graph(
       input_graph_def=frozen_graph,
       outputs=[
           'detection_boxes', 'detection_classes', 'detection_scores',
-          'num_detections', 'raw_outputs/lstm_c', 'raw_outputs/lstm_h',
-          'raw_inputs/init_lstm_c', 'raw_inputs/init_lstm_h'
-      ],
+          'num_detections'
+      ] + ([
+          'raw_outputs/lstm_c', 'raw_outputs/lstm_h', 'raw_inputs/init_lstm_c',
+          'raw_inputs/init_lstm_h'
+      ] if is_lstm else []),
       max_batch_size=1,
       max_workspace_size_bytes=1 << 25,
       precision_mode='FP16',
@@ -59,6 +66,16 @@ def main():
 
   with open(output_file_path, 'wb') as f:
     f.write(trt_graph.SerializeToString())
+
+
+def check_lstm(graph_def):
+  for n in graph_def.node:
+    if n.name in [
+        'raw_outputs/lstm_c', 'raw_outputs/lstm_h', 'raw_inputs/init_lstm_c',
+        'raw_inputs/init_lstm_h'
+    ]:
+      return True
+  return False
 
 
 def downgrade_equal_op(graph_def):

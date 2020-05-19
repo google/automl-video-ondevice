@@ -1,5 +1,5 @@
 # Lint as: python3
-# Copyright 2019 Google LLC
+# Copyright 2020 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@
 
 import numpy as np
 from automl_video_ondevice.object_tracking.base_object_detection import BaseObjectDetectionInference
-from automl_video_ondevice.object_tracking.types import NormalizedBoundingBox
-from automl_video_ondevice.object_tracking.types import ObjectTrackingAnnotation
+from automl_video_ondevice.types import NormalizedBoundingBox
+from automl_video_ondevice.types import ObjectTrackingAnnotation
 
 try:
   import platform

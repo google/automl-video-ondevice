@@ -1,0 +1,165 @@
+# Lint as: python3
+# Copyright 2020 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
+"""Validates generated tracks and filters out invalidated tracks."""
+
+import dataclasses
+from automl_video_ondevice.types import ObjectTrackingAnnotation
+
+
+def calculate_iou(bbox1, bbox2):
+  """Calculates the Intersection-Over-Union of two bounding boxes.
+
+  IOU is a ratio for determining how much two bounding boxes match.
+
+  Args:
+    bbox1: The first bounding box.
+    bbox2: The bounding box to compare with.
+
+  Returns:
+    The IOU as a float from 0.0 to 1.0 (1.0 being a perfect match.)
+  """
+  x_overlap = max(0,
+                  min(bbox1.right, bbox2.right) - max(bbox1.left, bbox2.left))
+  y_overlap = max(0,
+                  min(bbox1.bottom, bbox2.bottom) - max(bbox1.top, bbox2.top))
+  intersection = x_overlap * y_overlap
+
+  area1 = (bbox1.right - bbox1.left) * (bbox1.bottom - bbox1.top)
+  area2 = (bbox2.right - bbox2.left) * (bbox2.bottom - bbox2.top)
+  union = area1 + area2 - intersection
+
+  return intersection / union
+
+
+@dataclasses.dataclass
+class TrackWrapper:
+  """Wraps the tracking annotation with data only relevant to the validator."""
+  track: ObjectTrackingAnnotation
+  age: int  # How old this track is.
+  staleness: int  # How many iterations it has been since the last detection.
+
+
+class MediaPipeTrackValidator:
+  """Checks if an annotation is valid by measuring staleness.
+
+  Each track is stored and aged. If a track box intersects with a new detection,
+  then consider it an associated detection, and mark the track as fresh.
+
+  If a track exists for longer than allowed_staleness, then filter the track out
+  then tell the mediapipe graph to delete.
+  """
+
+  def __init__(self, allowed_staleness=10, min_iou=0.6):
+    """Constructor for MediaPipeTrackValidator.
+
+    Args:
+      allowed_staleness: How many updates the track can linger for until it is
+        determined to be stale.
+      min_iou: How much the detection box must match a tracked box to be
+        determined as an associated detection.
+    """
+    self._track_map = {}
+    self._allowed_staleness = allowed_staleness
+    self._min_iou = min_iou
+
+  def forget_unmanaged_tracks(self, managed_tracks):
+    """Removes unmanaged tracks from the validator's cache.
+
+    The mediapipe graph has it's own track manager and validator. This manager
+    also removes tracks automatically.
+
+    Unmanaged tracks are tracks no longer outputted by the mediapipe graph.
+
+    This makes sure that this validator is in sync with the mediapipe track
+    manager.
+
+    Args:
+      managed_tracks:
+    """
+    managed_ids = list(map(lambda t: t.track_id, managed_tracks))
+    keys = list(self._track_map.keys())
+    for idx in keys:
+      if idx not in managed_ids:
+        del self._track_map[idx]
+
+  def update_tracks(self, managed_tracks):
+    """Updates tracks stored in the validator with new tracking data.
+
+    Also adds new tracks if the validator does not know about the track yet.
+
+    Args:
+      managed_tracks: Tracks managed by mediapipe.
+    """
+    for track in managed_tracks:
+      if track.track_id in self._track_map:
+        registered_track = self._track_map[track.track_id]
+        registered_track.track = track
+      else:
+        new_track = TrackWrapper(
+            track=track,
+            age=0,
+            staleness=0,
+        )
+        self._track_map[track.track_id] = new_track
+
+  def age_tracks(self):
+    """Increases every tracks' age as well as staleness."""
+    for track in self._track_map.values():
+      track.age = track.age + 1
+      track.staleness = track.staleness + 1
+
+  def reset_tracks_with_detections(self, detections):
+    """Resets the staleness of tracks if there are associated detections.
+
+    Args:
+      detections: List of raw detections created from inferencing.
+    """
+    for detection in detections:
+      max_iou = 0
+      associated_track = None
+      for track in self._track_map.values():
+        iou = calculate_iou(detection.bbox, track.track.bbox)
+        if iou > max_iou and iou > self._min_iou:
+          max_iou = iou
+          associated_track = track
+      if associated_track is not None:
+        associated_track.staleness = 0
+
+  def process(self, detections, managed_tracks):
+    """Given detections and predicted tracks, calculates what tracks are stale.
+
+    Args:
+      detections: Raw detections generated by inferencing.
+      managed_tracks: Tracks to be validated, generated by mediapipe.
+
+    Returns:
+      Tuple where the first member is the filtered tracks, and the second is
+      list of track id's to be cancelled.
+    """
+    self.forget_unmanaged_tracks(managed_tracks)
+    self.update_tracks(managed_tracks)
+    self.age_tracks()
+    self.reset_tracks_with_detections(detections)
+
+    healthy_tracks = filter(lambda t: t.staleness <= self._allowed_staleness,
+                            self._track_map.values())
+    unwrapped_tracks = list(map(lambda t: t.track, healthy_tracks))
+
+    cancelled_tracks = filter(lambda t: t.staleness > self._allowed_staleness,
+                              self._track_map.values())
+    unwrapped_cancelled_tracks = list(
+        map(lambda t: t.track.track_id, cancelled_tracks))
+    return (unwrapped_tracks, unwrapped_cancelled_tracks)
