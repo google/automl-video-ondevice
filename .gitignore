@@ -18,3 +18,4 @@ data/traffic_frames/*_visualized.bmp
 
 # IDE generated files.
 .vscode
+.idea

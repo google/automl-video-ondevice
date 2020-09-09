@@ -1,8 +1,6 @@
 # Prerequisites
 
-`sudo apt-get install -y gcc build-essential docker.io`
-
-Install nvidia-docker: https://github.com/NVIDIA/nvidia-docker
+nvidia docker is pre-installed through JetPack after 4.4. 
 
 Clone this repo: `git clone https://github.com/google/automl-video-ondevice`
 
@@ -38,7 +36,7 @@ You can figure out the number of classes in the label map by running:
 
 ```expr `wc -l < deepstream/vot/label.txt` - 1```
 
-# Running a model using DeepStream
+# Running a TFTRT Model using DeepStream
 
 Make sure you are in the top-most `automl-video-ondevice` directory.
 
@@ -50,10 +48,10 @@ Retrieve and start the docker container:
 
 `$ docker run --gpus all -it --rm -v $(pwd):/automl-video-ondevice -v
 /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=$DISPLAY
-nvcr.io/nvidia/deepstream-l4t:5.0-dp-20.04-base`
+nvcr.io/nvidia/deepstream-l4t:5.0-20.07-samples`
 
 For non-Jetson devices, such as a Desktop replace nvcr.io/.../...-base with
-`nvcr.io/nvidia/deepstream:5.0-dp-20.04-triton` instead.
+`nvcr.io/nvidia/deepstream:5.0-20.07-samples` instead.
 
 Note: If you don't want to use Docker, you may install DeepStream directly.
 [Follow the guide provided by NVIDIA to do so.](https://docs.nvidia.com/metropolis/deepstream/5.0/dev-guide/index.html)
