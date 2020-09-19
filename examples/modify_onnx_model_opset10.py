@@ -12,37 +12,32 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-
-import onnx_graphsurgeon as gs
-import onnx
 import numpy as np
 import argparse
 
+import onnx_graphsurgeon as gs
+import onnx
 import onnx.shape_inference
 
-def count_uint8(graph):
 
-    count = len([tensor for tensor in graph.tensors().values() if hasattr(tensor, "dtype") and tensor.dtype == np.uint8])
+def count_uint8(graph):
+    count = len(
+        [tensor for tensor in graph.tensors().values() if hasattr(tensor, "dtype") and tensor.dtype == np.uint8])
 
     return count
 
-def fix_uint8_tensors(graph):
 
+def fix_uint8_tensors(graph):
     for node in graph.nodes:
         for node_input_tensor in node.inputs:
             if hasattr(node_input_tensor, "dtype") and node_input_tensor.dtype == np.uint8:
-                #print(node.name)
-                #print(node_input_tensor.name)
-                #print(node_input_tensor.dtype)
                 node_input_tensor.dtype = np.int32
         for node_output_tensor in node.outputs:
             if hasattr(node_output_tensor, "dtype") and node_output_tensor.dtype == np.uint8:
-                #print(node.name)
-                #print(node_output_tensor.name)
-                #print(node_output_tensor.dtype)
                 node_output_tensor.dtype = np.int32
-    
+
     return graph
+
 
 def replace_combinedNMS(graph, top_k=1284, keep_top_k=100, num_classes=3, plugin_version="1"):
     """
@@ -55,41 +50,28 @@ def replace_combinedNMS(graph, top_k=1284, keep_top_k=100, num_classes=3, plugin
             clip_boxes = node.attrs["clip_boxes"]
 
     tensor_map = graph.tensors()
-
     model_input_tensor = tensor_map["image_tensor:0"]
 
     input_boxes = tensor_map["Postprocessor/ExpandDims_1:0"]
     input_scores = tensor_map["Postprocessor/Slice:0"]
-
     output_boxes = tensor_map["detection_boxes:0"]
     output_scores = tensor_map["detection_scores:0"]
-
-    #print(input_boxes)
-    #print(input_scores)
-    #print(output_boxes)
-    #print(output_scores)
-    #print(tensor_map["Postprocessor/Reshape_2:0"])
+    output_boxes.name = "detection_boxes"
+    output_scores.name = "detection_scores"
 
     batch_size = model_input_tensor.shape[0]
-    #top_k = 1284
-    #keep_top_k = 100
 
-    iou_threshold = tensor_map["Postprocessor/CombinedNonMaxSuppression/combined_non_max_suppression/iou_threshold:0"].values.item()
-    score_threshold = tensor_map["Postprocessor/CombinedNonMaxSuppression/combined_non_max_suppression/score_threshold:0"].values.item()
-    #max_total_size = tensor_map["Postprocessor/CombinedNonMaxSuppression/combined_non_max_suppression/CombinedNonMaxSuppression/max_total_size:0"].values.item()
+    iou_threshold = tensor_map[
+        "Postprocessor/CombinedNonMaxSuppression/combined_non_max_suppression/iou_threshold:0"].values.item()
+    score_threshold = tensor_map[
+        "Postprocessor/CombinedNonMaxSuppression/combined_non_max_suppression/score_threshold:0"].values.item()
 
-    #print(iou_threshold, type(iou_threshold))
-    #print(score_threshold, type(score_threshold))
-    #print(max_total_size, type(max_total_size))
-
-    #output_boxes = gs.Variable(name="detection_boxes:0", dtype=np.float32, shape=(batch_size, keep_top_k, 4))
-    #output_scores = gs.Variable(name="detection_scores:0", dtype=np.float32, shape=(batch_size, keep_top_k))
     output_classes = gs.Variable(name="detection_classes_nms:0", dtype=np.float32, shape=(batch_size, keep_top_k))
     output_num_detections = gs.Variable(name="num_detections_nms:0", dtype=np.int32, shape=(batch_size, 1))
 
-    #attributes = [("shareLocation", True), ("backgroundLabelId", -1), ("numClasses", num_classes), ("topK", top_k), ("keepTopK", keep_top_k), ("scoreThreshold", score_threshold), ("iouThreshold", iou_threshold), ("isNormalized", True), ("clipBoxes", clip_boxes), ("plugin_version", plugin_version)]
-    #attributes_ordered_dict = OrderedDict(attributes)
-    attributes_ordered_dict = {"shareLocation": True, "backgroundLabelId": -1, "numClasses": num_classes, "topK": top_k, "keepTopK": keep_top_k, "scoreThreshold": score_threshold, "iouThreshold": iou_threshold, "isNormalized": True, "clipBoxes": clip_boxes, "plugin_version": plugin_version}
+    attributes_ordered_dict = {"shareLocation": True, "backgroundLabelId": -1, "numClasses": num_classes, "topK": top_k,
+                               "keepTopK": keep_top_k, "scoreThreshold": score_threshold, "iouThreshold": iou_threshold,
+                               "isNormalized": True, "clipBoxes": clip_boxes, "plugin_version": plugin_version}
 
     for node in graph.nodes:
         if node.name == "Postprocessor/CombinedNonMaxSuppression/combined_non_max_suppression/CombinedNonMaxSuppression":
@@ -110,18 +92,25 @@ def replace_combinedNMS(graph, top_k=1284, keep_top_k=100, num_classes=3, plugin
                 if input_tensor.name == "Postprocessor/CombinedNonMaxSuppression/combined_non_max_suppression/CombinedNonMaxSuppression:3":
                     input_id = i
             node.inputs[input_id] = output_num_detections
-    
+
+    graph.nodes[-2].outputs[0].name = "detection_classes"
+    graph.nodes[-1].outputs[0].name = "num_detections"
+    tensor_map['detection_classes:0'].name = "detection_classes"
+    tensor_map["num_detections:0"].name = "num_detections"
+
+    graph.outputs[0].name = "detection_boxes"
+    graph.outputs[1].name = "detection_classes"
+    graph.outputs[2].name = "detection_scores"
+    graph.outputs[3].name = "num_detections"
+
     return graph
 
 
 def modify_onnx(onnx_model_filepath="vot_opset_10.onnx", modified_onnx_model_filepath="vot_opset_10_modified.onnx"):
-
     orig_model = onnx.load(onnx_model_filepath)
 
     inferred_model = onnx.shape_inference.infer_shapes(orig_model)
     graph = gs.import_onnx(inferred_model)
-
-    #graph = gs.import_onnx(orig_model)
 
     if count_uint8(graph=graph) > 0:
         print("Fixing UINT8 issues...")
