@@ -124,6 +124,6 @@ then,
 Then convert ONNX graph to a TensorRT Engine file, please note the TensorRT conversion is a memory intensive process so be mindful when running on less powerful device like Nano:
 `/usr/src/tensorrt/bin/trtexec --onnx=model_opset_10_modified.onnx --fp16 --workspace=2048 --allowGPUFallback --saveEngine=vot_fp16.plan --verbose &> trtexec_build.log`
 
-The log could be viewed by `tail -f trtexec_build.log`. The TensorRT Engine file `vot_fp16.engine` could be deployed to a Deep Stream application.
+The log could be viewed by `tail -f trtexec_build.log`. The TensorRT Engine file `vot_fp16.plan` could be deployed to a Deep Stream application.
 
 
