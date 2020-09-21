@@ -32,4 +32,4 @@ output {
   data_type: TYPE_FP32
   dims: [ 1 ]
 }
-default_model_filename: "model.plan"
+default_model_filename: "traffic_model_fp16_xavier_nx.plan"
