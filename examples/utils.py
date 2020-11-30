@@ -15,9 +15,12 @@
 # ==============================================================================
 """Shared utility functions for each demo."""
 
+from typing import List
 import time
 import cv2
 import numpy as np
+
+from automl_video_ondevice import shot_classification as vcn
 
 colors = [(np.random.uniform(0, 255), np.random.uniform(0, 255),
            np.random.uniform(0, 255)),
@@ -61,6 +64,30 @@ def render_bbox(image, annotations):
     image = cv2.rectangle(image, (x0, y0), (x1, y1), color, 2)
     image = cv2.putText(image, label, (x0, y0 + 30), cv2.FONT_HERSHEY_SIMPLEX,
                         1.0, (255, 0, 0), 2)
+  return image
+
+
+def render_classifications(
+    image: np.ndarray,
+    annotations: List[vcn.ShotClassificationAnnotation]) -> np.ndarray:
+  """Renders a visualzation of shot classification annotations.
+
+  Args:
+    image: numpy array of image bytes. The format should be RGB with each
+      channel being [0,256).
+    annotations: the annotations to render onto the image. Accepts a list of
+      ShotClassificationAnnotation.
+
+  Returns:
+    numpy array of image, with bounding box drawn.
+  """
+  i = 1
+  for annotation in annotations:
+    percent = int(100 * annotation.confidence_score)
+    label = '%d%% %s' % (percent, annotation.class_name)
+    image = cv2.putText(image, label, (0, i * 30), cv2.FONT_HERSHEY_SIMPLEX,
+                        1.0, (255, 0, 0), 2)
+    i = i + 1
   return image
 
 

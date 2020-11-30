@@ -36,4 +36,9 @@ class ShotClassificationConfig:
   duplicate_results: bool = False
 
   # Waits this number of frames before running inference.
+  # This is ignored by the LSTM model.
   inference_rate: int = 25
+
+  # Sliding window size.
+  # This is ignored by the LSTM model.
+  sliding_window_size: int = 64

@@ -29,8 +29,8 @@ from automl_video_ondevice import object_tracking as vot
 import utils
 
 try:
-  import cv2  
-except:  
+  import cv2  # pylint: disable=g-import-not-at-top
+except:  # pylint: disable=bare-except
   print("Couldn't load cv2. Try running: sudo apt install python3-opencv.")
 
 current_milli_time = lambda: int(round(time.time() * 1000))

@@ -21,7 +21,7 @@ python3 tools/ds_label_map_converter.py \
 """
 
 import argparse
-from automl_video_ondevice import utils
+import utils
 
 
 def main():

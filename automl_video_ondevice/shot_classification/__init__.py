@@ -21,6 +21,8 @@ Based on filename, the loader will instantiate an inference engine.
 from automl_video_ondevice.shot_classification.base_shot_classification import BaseShotClassificationInference
 from automl_video_ondevice.shot_classification.config import ShotClassificationConfig
 from automl_video_ondevice.types import Format
+from automl_video_ondevice.types import ShotClassificationAnnotation
+from automl_video_ondevice.types import Size
 from automl_video_ondevice.utils import format_from_filename
 
 
@@ -28,9 +30,9 @@ def load(frozen_graph_path,
          label_map_path,
          config,
          file_format=Format.UNDEFINED):
-  
-  # type: (str, str, ShotClassificationConfig, Format) -> BaseObjectDetectionInference
-  
+  # pylint: disable=line-too-long
+  # type: (str, str, ShotClassificationConfig, Format) -> BaseShotClassificationInference
+  # pylint: enable=line-too-long
   """Instantiates an inference engine based on the file format.
 
   Args:
@@ -41,9 +43,9 @@ def load(frozen_graph_path,
       assumptions based on filename.
 
   Returns:
-    An instantiated inference engine.
+    An instantiated inference engine, a class that implements the method bodies
+      of BaseShotClassificationInference.
   """
-  del config  # Unused.
 
   if file_format == Format.UNDEFINED:
     file_format = format_from_filename(frozen_graph_path)
@@ -51,4 +53,16 @@ def load(frozen_graph_path,
   print('Loading: {} <{}> {}'.format(frozen_graph_path, file_format,
                                      label_map_path))
 
-  return BaseShotClassificationInference(None, None, None)
+  engine = None
+
+  # Some modules may never even be loaded. Only hotloads what is necessary.
+  # pylint: disable=g-import-not-at-top,import-outside-toplevel
+  if file_format == Format.TENSORFLOW:
+    from automl_video_ondevice.shot_classification.tf_shot_classification import TFShotClassificationInference
+    engine = TFShotClassificationInference(frozen_graph_path, label_map_path,
+                                           config)
+  else:
+    engine = BaseShotClassificationInference(frozen_graph_path, label_map_path,
+                                             config)
+
+  return engine

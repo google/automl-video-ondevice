@@ -23,7 +23,7 @@ from automl_video_ondevice.types import ObjectTrackingAnnotation
 from automl_video_ondevice.types import Size
 
 import automl_video_ondevice.utils as vot_utils
-import tensorflow.contrib.tensorrt as trt  
+import tensorflow.contrib.tensorrt as trt  # pylint: disable=g-explicit-tensorflow-version-import,unused-import
 
 
 class TFObjectDetectionInference(BaseObjectDetectionInference):
