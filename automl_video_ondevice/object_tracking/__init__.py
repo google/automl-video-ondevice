@@ -33,9 +33,9 @@ def load(frozen_graph_path,
          label_map_path,
          config,
          file_format=Format.UNDEFINED):
-  
+  # pylint: disable=line-too-long
   # type: (str, str, ObjectTrackingConfig, Format) -> BaseObjectDetectionInference
-  
+  # pylint: enable=line-too-long
   """Instantiates an inference engine based on the file format.
 
   Args:
@@ -57,7 +57,7 @@ def load(frozen_graph_path,
   engine = None
 
   # Some modules may never even be loaded. Only hotloads what is necessary.
-  
+  # pylint: disable=g-import-not-at-top,import-outside-toplevel
   if file_format == Format.TFLITE:
     from automl_video_ondevice.object_tracking.tflite_object_detection import TFLiteObjectDetectionInference
     engine = TFLiteObjectDetectionInference(frozen_graph_path, label_map_path,
@@ -72,10 +72,10 @@ def load(frozen_graph_path,
   if config.tracker == Tracker.FAST_INACCURATE:
     return CamshiftObjectTracker(engine, config)
   elif config.tracker == Tracker.BASIC:
-    from automl_video_ondevice.object_tracking.mediapipe_object_tracker import MediaPipeObjectTracker  
+    from automl_video_ondevice.object_tracking.mediapipe_object_tracker import MediaPipeObjectTracker  # pylint: disable=g-import-not-at-top
     return MediaPipeObjectTracker(engine, config)
   elif not config.tracker or config.tracker == Tracker.NONE:
     return engine
   else:
     raise NotImplementedError('Invalid or unimplemented tracker type.')
-  
+  # pylint: enable=g-import-not-at-top,import-outside-toplevel

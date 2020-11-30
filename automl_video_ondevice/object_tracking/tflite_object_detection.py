@@ -36,7 +36,7 @@ EDGETPU_SHARED_LIB = {
   'Linux': 'libedgetpu.so.1',
   'Darwin': 'libedgetpu.1.dylib',
   'Windows': 'edgetpu.dll'
-}[platform.system()]
+}[platform.system()]  # pylint: disable=line-too-long
 
 
 class TFLiteObjectDetectionInference(BaseObjectDetectionInference):
@@ -129,6 +129,12 @@ class TFLiteObjectDetectionInference(BaseObjectDetectionInference):
       np.copyto(input_lstm_c, self._lstm_c)
       np.copyto(input_lstm_h, self._lstm_h)
 
+  def get_label(self, class_id):
+    if class_id >= 0 and class_id < len(self.label_list):
+      return self.label_list[class_id]
+    else:
+      return 'n/a'
+
   def run(self, timestamp, frame, annotations):
     # Interpreter hates it when native tensors are retained.
     # fill_inputs will release input tensors after filling with data.
@@ -158,7 +164,7 @@ class TFLiteObjectDetectionInference(BaseObjectDetectionInference):
             timestamp=timestamp,
             track_id=-1,
             class_id=int(classes[i]),
-            class_name=self.label_list[int(classes[i])],
+            class_name=self.get_label(int(classes[i])),
             confidence_score=scores[i],
             bbox=bbox)
 

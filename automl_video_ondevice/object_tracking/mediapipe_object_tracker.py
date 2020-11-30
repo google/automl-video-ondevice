@@ -23,7 +23,7 @@ from automl_video_ondevice.types import ObjectTrackingAnnotation
 try:
   import platform
   if platform.machine().lower() == 'aarch64':
-    from automl_video_ondevice.object_tracking.mediapipe_tracker.aarch64 import mediapipe_tracker  
+    from automl_video_ondevice.object_tracking.mediapipe_tracker.aarch64 import mediapipe_tracker  # pylint: disable=line-too-long
   else:
     raise ImportError('Unsupported architecture.')
 except ImportError:

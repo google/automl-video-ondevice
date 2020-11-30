@@ -45,6 +45,8 @@ def main():
   if args.downgrade:
     downgrade_equal_op(frozen_graph)
     downgrade_nmv5_op(frozen_graph)
+    downgrade_fused_batch_norm_v3_op(frozen_graph)
+    downgrade_depthwise_conv2d_native_op(frozen_graph)
 
   is_lstm = check_lstm(frozen_graph)
   if is_lstm:
@@ -82,6 +84,18 @@ def downgrade_equal_op(graph_def):
   for n in graph_def.node:
     if n.op == 'Equal':
       del n.attr['incompatible_shape_error']
+
+
+def downgrade_fused_batch_norm_v3_op(graph_def):
+  for n in graph_def.node:
+    if n.op == 'FusedBatchNormV3':
+      del n.attr['exponential_avg_factor']
+
+
+def downgrade_depthwise_conv2d_native_op(graph_def):
+  for n in graph_def.node:
+    if n.op == 'DepthwiseConv2dNative':
+      del n.attr['explicit_paddings']
 
 
 def downgrade_nmv5_op(graph_def):

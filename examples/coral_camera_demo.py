@@ -30,8 +30,8 @@ from automl_video_ondevice import object_tracking as vot
 import utils
 
 try:
-  import cv2  
-except:  
+  import cv2  # pylint: disable=g-import-not-at-top
+except:  # pylint: disable=bare-except
   print("Couldn't load cv2. Try running: sudo apt install python3-opencv.")
 
 current_milli_time = lambda: int(round(time.time() * 1000))
@@ -69,7 +69,7 @@ def main():
       break
 
     # Converts image to PIL Image.
-    pil_im = Image.fromarray(frame).convert('RGB').resize(
+    pil_im = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)).resize(
         (input_size.width, input_size.height))
 
     # Grabs current millisecond for timestamp.
